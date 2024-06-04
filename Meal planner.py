@@ -1,4 +1,4 @@
-# todo : handle auto increment bugs
+# search and implement conn.rollback & control if user changed a food in weekly meals.
 
 import mysql.connector
 import random
@@ -76,44 +76,124 @@ class MealPlanner:
         Meal_category VARCHAR(1) NOT NULL,
         Meal_food INT NOT NULL,
         PRIMARY KEY (id),
-        CONSTRAINT Meal_food_fk FOREIGN KEY (Meal_food) REFERENCES food(id)
+        CONSTRAINT Meal_food_fk FOREIGN KEY (Meal_food) REFERENCES food(id),
+        # This Constraint is required for the table to prevent same meals on each day
+        CONSTRAINT Meal_unique UNIQUE (Meal_day, Meal_category)  
         );"""
         self.cursor.execute(sql)
         self.conn.commit()
 
-    def add_foods(self):
-        foods_lst = ["Pizza", "Cheeseburger", "Steak", "Omelette", "Pepperoni", "Qeymah"]
+    def add_nutrients(self, nutrients: dict):
+
         sql = """
-        INSERT INTO food(name) VALUES (%s);
+        INSERT INTO nutrients(name, quantity) VALUES (%s, %s)
         """
-        for food in foods_lst:
-            self.cursor.execute(sql, (food,))
-            self.conn.commit()
+        for i in nutrients.keys():
+            try:
+                self.cursor.execute(sql, (i, nutrients[i]))
+            except Exception as e:
+                print(e)
+            else:
+                self.conn.commit()
+                print(f"{i} added successfully")
 
-    def insertWeeklyMeals(self):
-        self.cursor.execute("DELETE from weekly_meals")
-        self.conn.commit()
-        self.cursor.execute("ALTER TABLE weekly_meals AUTO_INCREMENT=1")
-        self.conn.commit()
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        meals = ["B", "L", "D"]
-        self.cursor.execute("""SELECT id FROM Food ORDER BY id ASC """)
-        foods = self.cursor.fetchall()
-        foods = [j for i in foods for j in i]
-        print(foods)
+    def add_food(self, food, recipie):
+        sql = """
+        INSERT INTO food(Name, Recipie) VALUES (%s, %s);
+        """
+        try:
+            self.cursor.execute(sql, (food, recipie))
+            self.conn.commit()
+        except Exception as e:
+            print(e)
+        else:
+            print(f"{food} added successfully")
+
+    def add_food_ingredients(self, food, ingredients: dict):
+        def food_key():
+            sql = "SELECT id FROM food WHERE Name = %s "
+            try:
+                self.cursor.execute(sql, (food,))
+            except Exception as e:
+                print(e)
+            else:
+                return self.cursor.fetchone()[0]
+
+        def ingredient_key():
+            sql = "SELECT id FROM nutrients WHERE Name = %s "
+            ingredients_dict = {}
+            for i in ingredients.keys():
+                try:
+                    self.cursor.execute(sql, (i,))
+                    j = self.cursor.fetchone()[0]
+                    ingredients_dict[j] = ingredients[i]
+                except Exception as e:
+                    print(e)
+            return ingredients_dict
+
+        food_id = food_key()
+        ingredients_dict = ingredient_key()
 
         sql = """
-        INSERT INTO Weekly_Meals (MEAL_day, Meal_category, Meal_food)
+        INSERT INTO foods_ingredients(Food_id, Food_Ingredient, Ingredient_quantity) VALUES (%s, %s, %s)
+        """
+        for i in ingredients_dict.keys():
+            try:
+                self.cursor.execute(sql, (food_id, i, ingredients_dict[i]))
+                self.conn.commit()
+            except Exception as e:
+                print(e)
+        print(f"{food}'s ingredients added successfully")
+
+    def insertWeeklyMeals(self, day, meal, food):
+        def food_key():
+            sql = "SELECT id FROM food WHERE Name = %s "
+            try:
+                self.cursor.execute(sql, (food,))
+            except Exception as e:
+                print(e)
+            else:
+                return self.cursor.fetchone()[0]
+
+        food_id = food_key()
+        sql = """
+        INSERT INTO weekly_meals(meal_day, meal_category, meal_food)
         VALUES (%s, %s, %s);
         """
+        try:
+            self.cursor.execute(sql, (day, meal, food_id))
+            self.conn.commit()
+        except Exception as e:
+            print(e)
+        else:
+            print("your meal added successfully")
 
-        for day in days :
-            for meal in meals :
-                self.cursor.execute(sql, (day, meal, random.choice(foods)))
-                self.conn.commit()
+        # The next query is to get how much and what ingredient selected food need
+        sql = """SELECT Ingredient_quantity, food_Ingredient  FROM foods_ingredients WHERE Food_id = %s"""
+        try:
+            self.cursor.execute(sql, (food_id,))
+        except Exception as e:
+            print(e)
+        else:
+            food_ingredients = self.cursor.fetchall()
+
+            # This is the part of code that made me angry so much, but after I figured out how to config it
+            # sent me to heaven
+            # in this part of code I used data of food_ingredients,
+            # which are ingredient and quantity of it that needed for food, to create a query
+            # to update quantity of nutrients we have after adding food to weekly meals
+            sql = """
+             UPDATE nutrients SET Quantity =  Quantity-%s
+             WHERE id = %s;
+             """
+            try:
+                for i in food_ingredients:
+                    self.cursor.execute(sql, i)
+                    self.conn.commit()
+            except Exception as e:
+                print(e)
 
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    # planner.add_foods()
-    planner.insertWeeklyMeals()
+    planner.insertWeeklyMeals("Monday", "L", "Steak")
