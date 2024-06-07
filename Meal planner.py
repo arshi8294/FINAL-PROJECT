@@ -1,5 +1,4 @@
-# search and implement conn.rollback & control if user changed a food in weekly meals.
-
+# todo : create quick food function
 import mysql.connector
 import random
 
@@ -184,12 +183,13 @@ class MealPlanner:
         print(f"{food}'s ingredients added successfully")
 
     def insertWeeklyMeals(self, day, meal, food):
-        
+
         """This function is used to insert meals of a week to weekly_meals table in the database.
         It takes a day of the week and a meal name (like breakfast, lunch or dinner) and the food user want for that
         meal. In this function, food_key another time used to convert food name to its id.
         Although one of the most important functions of the application executed at the end of this function,
         and it's updating our nutrients storage after a meal selected completely """
+
         def food_key():
             sql = "SELECT id FROM food WHERE Name = %s "
             try:
@@ -237,7 +237,16 @@ class MealPlanner:
                 print(e)
                 self.conn.rollback()
 
+    def shopping_cart(self):
+        sql = """SELECT Name, abs(Quantity) FROM nutrients WHERE Quantity<0"""
+        self.cursor.execute(sql)
+        shopping_list = self.cursor.fetchall()
+        return shopping_list
+
+    def quick_meal(self):
+        pass
+
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    # planner.insertWeeklyMeals("Monday", "L", "Steak")
+
