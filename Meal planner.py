@@ -1,6 +1,11 @@
 # todo : create quick food function
+from datetime import date, datetime, timedelta, time
+from typing import Dict, Set, Any
+
 import mysql.connector
 import random
+
+from _decimal import Decimal
 
 
 class MealPlanner:
@@ -146,7 +151,26 @@ class MealPlanner:
          In this function we defined two functions to convert food name and ingredient name to their ids in
          food table and nutrients table."""
 
+        # with the code below we add all not existed nutrients which uses in the food to nutrients table
+        self.cursor.execute("SELECT name FROM nutrients")
+        nutrients = self.cursor.fetchall()
+        nutrients = [i[0] for i in nutrients]
+        sql = """
+        INSERT INTO nutrients (Name, Quantity) VALUES (%s, 0)
+        """
+        for i in ingredients:
+            if i not in nutrients:
+                try:
+                    self.cursor.execute(sql, (i, ))
+                    self.conn.commit()
+                except Exception as e:
+                    print(e)
+                    self.conn.rollback()
+
         def food_key():
+            """
+            this function is used to convert food which is food name to food_id which is id of that food in food table
+            """
             sql = "SELECT id FROM food WHERE Name = %s "
             try:
                 self.cursor.execute(sql, (food,))
@@ -156,6 +180,10 @@ class MealPlanner:
                 return self.cursor.fetchone()[0]
 
         def ingredient_key():
+            """"
+            this function is used to convert the dictionary which contains nutrients name as keys to ingredients_dict
+            which contains nutrients id as keys and quantity as value
+            """
             sql = "SELECT id FROM nutrients WHERE Name = %s "
             ingredients_dict = {}
             for i in ingredients.keys():
@@ -181,6 +209,11 @@ class MealPlanner:
                 print(e)
                 self.conn.rollback()
         print(f"{food}'s ingredients added successfully")
+
+
+
+
+
 
     def insertWeeklyMeals(self, day, meal, food):
 
@@ -213,6 +246,9 @@ class MealPlanner:
         else:
             print("your meal added successfully")
 
+        self.decrease_nutrients(food_id)
+
+    def decrease_nutrients(self, food_id):
         # The next query is to get how much and what ingredient selected food need
         sql = """SELECT Ingredient_quantity, food_Ingredient  FROM foods_ingredients WHERE Food_id = %s"""
         try:
@@ -237,16 +273,22 @@ class MealPlanner:
                 print(e)
                 self.conn.rollback()
 
+    @property
     def shopping_cart(self):
         sql = """SELECT Name, abs(Quantity) FROM nutrients WHERE Quantity<0"""
         self.cursor.execute(sql)
         shopping_list = self.cursor.fetchall()
         return shopping_list
 
-    def quick_meal(self):
-        pass
+    # def quick_meal(self):
+    #     self.cursor.execute("SELECT id FROM food")
+    #     foods_list = self.cursor.fetchall()
 
 
 if __name__ == "__main__":
     planner = MealPlanner()
-
+    planner.add_food("sth", "nothing")
+    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    planner.add_food_ingredients("sth", {"s": 2, "d": 3, "f": 4})
+    planner.insertWeeklyMeals("Monday", "L", "sth")
+    print(planner.shopping_cart)
