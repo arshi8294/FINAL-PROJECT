@@ -1,6 +1,5 @@
-# todo : create quick food function
-from datetime import date, datetime, timedelta, time
-from typing import Dict, Set, Any
+# todo : make dict comprehesion in display food better and create delete food func and create gui
+
 
 import mysql.connector
 import random
@@ -57,9 +56,7 @@ class MealPlanner:
         CREATE TABLE IF NOT EXISTS food(
         id INT NOT NULL AUTO_INCREMENT,
         Name VARCHAR(255) NOT NULL UNIQUE,
-        Is_Breakfast BOOLEAN DEFAULT TRUE,
-        Is_Lunch BOOLEAN DEFAULT TRUE,
-        Is_Dinner BOOLEAN DEFAULT TRUE,
+        Is_Breakfast BOOLEAN DEFAULT FALSE,
         Recipie TEXT DEFAULT NULL,
         PRIMARY KEY (id)
         );
@@ -80,7 +77,8 @@ class MealPlanner:
         Ingredient_quantity INT NOT NULL ,
         PRIMARY KEY (id),
         CONSTRAINT FOOD_FK FOREIGN KEY (Food_id) REFERENCES food(id),
-        CONSTRAINT INGREDIENT_FK FOREIGN KEY (Food_ingredient) REFERENCES Nutrients(id)
+        CONSTRAINT INGREDIENT_FK FOREIGN KEY (Food_ingredient) REFERENCES Nutrients(id),
+        CONSTRAINT UNQ_FOOD_INGREDIENTS UNIQUE (Food_id, Food_ingredient)
         );"""
         try:
             self.cursor.execute(sql)
@@ -161,7 +159,7 @@ class MealPlanner:
         for i in ingredients:
             if i not in nutrients:
                 try:
-                    self.cursor.execute(sql, (i, ))
+                    self.cursor.execute(sql, (i,))
                     self.conn.commit()
                 except Exception as e:
                     print(e)
@@ -209,11 +207,6 @@ class MealPlanner:
                 print(e)
                 self.conn.rollback()
         print(f"{food}'s ingredients added successfully")
-
-
-
-
-
 
     def insertWeeklyMeals(self, day, meal, food):
 
@@ -273,6 +266,19 @@ class MealPlanner:
                 print(e)
                 self.conn.rollback()
 
+    def display_food(self, food_id):
+        sql = """SELECT Name, Ingredient_quantity FROM foods_ingredients JOIN nutrients
+         ON foods_ingredients.Food_ingredient = nutrients.id WHERE Food_id = %s"""
+        try:
+            self.cursor.execute(sql, (food_id,))
+            food_ingredients = self.cursor.fetchall()
+            dict_ingredients = {i[0]: i[1] for i in food_ingredients}
+            self.cursor.execute("""SELECT Name, Recipie FROM FOOD WHERE id = %s""", (food_id,))
+            food_name = self.cursor.fetchall()
+            return food_name[0][0], dict_ingredients, food_name[0][1]
+        except Exception as e:
+            print(e)
+
     @property
     def shopping_cart(self):
         sql = """SELECT Name, abs(Quantity) FROM nutrients WHERE Quantity<0"""
@@ -280,15 +286,34 @@ class MealPlanner:
         shopping_list = self.cursor.fetchall()
         return shopping_list
 
-    # def quick_meal(self):
-    #     self.cursor.execute("SELECT id FROM food")
-    #     foods_list = self.cursor.fetchall()
+    def quick_meal(self):
+        """ IN THIS FUNCTION BY USING AN INNER JOIN QUERY WE CAN HAVE ACCESS TO THE AVAILABLE FOODS BASED ON
+         REMAIN NUTRIENTS IN NUTRIENTS TABLE IN DATABASE"""
+        # this query will give us available foods based on quantity of ingredients remain for user
+        sql = """
+            SELECT DISTINCT food.id FROM ((foods_ingredients INNER JOIN food
+            ON foods_ingredients.Food_id = food.id)
+            INNER JOIN nutrients ON Foods_ingredients.Food_ingredient = nutrients.id) 
+            WHERE nutrients.Quantity > foods_ingredients.Ingredient_quantity
+            """
+        try:
+            self.cursor.execute(sql)
+            available_foods = self.cursor.fetchall()
+            food_id = random.choice(available_foods)[0]
+            return self.display_food(food_id)
+        except Exception as e:
+            return e
 
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    planner.add_food("sth", "nothing")
     planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    planner.add_food_ingredients("sth", {"s": 2, "d": 3, "f": 4})
-    planner.insertWeeklyMeals("Monday", "L", "sth")
+    planner.add_food("sth24", "nothing")
+    planner.add_food("sth25", "nothing")
+    planner.add_food("sth26", "nothing")
+    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    planner.insertWeeklyMeals("Monday", "L", "sth26")
+    print(planner.quick_meal())
     print(planner.shopping_cart)
