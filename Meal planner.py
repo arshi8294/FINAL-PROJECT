@@ -1,6 +1,3 @@
-# todo : make dict comprehesion in display food better and create delete food func and create gui
-
-
 import mysql.connector
 import random
 
@@ -141,13 +138,23 @@ class MealPlanner:
         else:
             print(f"{food} added successfully")
 
+    def food_key(self, food):
+        """
+        this function is used to convert food which is food name to food_id which is id of that food in food table
+        """
+        sql = "SELECT id FROM food WHERE Name = %s "
+        try:
+            self.cursor.execute(sql, (food,))
+        except Exception as e:
+            print(e)
+        else:
+            return self.cursor.fetchone()[0]
+
     def add_food_ingredients(self, food, ingredients: dict):
 
         """ This function is used to add ingredients of foods to the foods_ingredients table in the database;
          It takes a food name and a dictionary of ingredients, which contains ingredients as keys and quantity as values
-         and insert them into the foods_ingredients.
-         In this function we defined two functions to convert food name and ingredient name to their ids in
-         food table and nutrients table."""
+         and insert them into the foods_ingredients."""
 
         # with the code below we add all not existed nutrients which uses in the food to nutrients table
         self.cursor.execute("SELECT name FROM nutrients")
@@ -165,18 +172,6 @@ class MealPlanner:
                     print(e)
                     self.conn.rollback()
 
-        def food_key():
-            """
-            this function is used to convert food which is food name to food_id which is id of that food in food table
-            """
-            sql = "SELECT id FROM food WHERE Name = %s "
-            try:
-                self.cursor.execute(sql, (food,))
-            except Exception as e:
-                print(e)
-            else:
-                return self.cursor.fetchone()[0]
-
         def ingredient_key():
             """"
             this function is used to convert the dictionary which contains nutrients name as keys to ingredients_dict
@@ -193,7 +188,7 @@ class MealPlanner:
                     print(e)
             return ingredients_dict
 
-        food_id = food_key()
+        food_id = self.food_key(food)
         ingredients_dict = ingredient_key()
 
         sql = """
@@ -216,16 +211,7 @@ class MealPlanner:
         Although one of the most important functions of the application executed at the end of this function,
         and it's updating our nutrients storage after a meal selected completely """
 
-        def food_key():
-            sql = "SELECT id FROM food WHERE Name = %s "
-            try:
-                self.cursor.execute(sql, (food,))
-            except Exception as e:
-                print(e)
-            else:
-                return self.cursor.fetchone()[0]
-
-        food_id = food_key()
+        food_id = self.food_key(food)
         sql = """
         INSERT INTO weekly_meals(meal_day, meal_category, meal_food)
         VALUES (%s, %s, %s);
@@ -286,6 +272,45 @@ class MealPlanner:
         shopping_list = self.cursor.fetchall()
         return shopping_list
 
+    def delete_food(self, food: str):
+        """This method deletes the food user wants to delete from all 3 tables: food, foods_ingredients & weekly_meals
+        and if food were chosen by user in weekly_meals it will return ingredients it took to nutrients table."""
+        food_id = self.food_key(food)
+        sql = "SELECT count(*) as count_food FROM weekly_meals WHERE Meal_food = %s"
+        self.cursor.execute(sql, (food_id,))
+        result = self.cursor.fetchone()
+        if result[0]:
+            for j in range(result[0]):
+                sql = """SELECT Ingredient_quantity, food_Ingredient  FROM foods_ingredients WHERE Food_id = %s"""
+                try:
+                    self.cursor.execute(sql, (food_id,))
+                except Exception as e:
+                    print(e)
+                else:
+                    food_ingredients = self.cursor.fetchall()
+                    sql = """
+                     UPDATE nutrients SET Quantity =  Quantity + %s
+                     WHERE id = %s;
+                     """
+                    try:
+                        for i in food_ingredients:
+                            self.cursor.execute(sql, i)
+                            self.conn.commit()
+                    except Exception as e:
+                        print(e)
+                        self.conn.rollback()
+
+        try:
+            self.cursor.execute("DELETE FROM weekly_meals WHERE Meal_food = %s", (food_id,))
+            self.conn.commit()
+            self.cursor.execute("DELETE FROM foods_ingredients WHERE Food_id = %s", (food_id,))
+            self.conn.commit()
+            self.cursor.execute("DELETE FROM food WHERE id = %s", (food_id,))
+            self.conn.commit()
+        except Exception as e:
+            print(e)
+            self.conn.rollback()
+
     def quick_meal(self):
         """ IN THIS FUNCTION BY USING AN INNER JOIN QUERY WE CAN HAVE ACCESS TO THE AVAILABLE FOODS BASED ON
          REMAIN NUTRIENTS IN NUTRIENTS TABLE IN DATABASE"""
@@ -307,13 +332,14 @@ class MealPlanner:
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    planner.add_food("sth24", "nothing")
-    planner.add_food("sth25", "nothing")
-    planner.add_food("sth26", "nothing")
-    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    planner.insertWeeklyMeals("Monday", "L", "sth26")
-    print(planner.quick_meal())
+    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    # planner.add_food("sth24", "nothing")
+    # planner.add_food("sth25", "nothing")
+    # planner.add_food("sth26", "nothing")
+    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    # planner.insertWeeklyMeals("Monday", "L", "sth26")
+    # print(planner.quick_meal())
+    planner.delete_food("sth26")
     print(planner.shopping_cart)
