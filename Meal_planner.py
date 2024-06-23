@@ -261,11 +261,21 @@ class MealPlanner:
             print(e)
 
     @property
-    def shopping_cart(self):
+    def shopping_list(self):
         sql = """SELECT Name, abs(Quantity) FROM nutrients WHERE Quantity<0"""
         self.cursor.execute(sql)
-        shopping_list = self.cursor.fetchall()
-        return shopping_list
+        shopping_cart = self.cursor.fetchall()
+        shopping_cart = {k: v for k, v in shopping_cart}
+        return shopping_cart
+
+    def update_nutrients_inventory(self, items: dict):
+        sql = """UPDATE nutrients SET Quantity = %s WHERE Name = %s"""
+        try:
+            for i in items:
+                self.cursor.execute(sql, (items[i], i))
+                self.conn.commit()
+        except Exception as e:
+            print(e)
 
     def delete_food(self, food: str):
         """This method deletes the food user wants to delete from all 3 tables: food, foods_ingredients & weekly_meals
@@ -306,35 +316,42 @@ class MealPlanner:
             print(e)
             self.conn.rollback()
 
-    def quick_meal(self):
-        """ IN THIS FUNCTION BY USING AN INNER JOIN QUERY WE CAN HAVE ACCESS TO THE AVAILABLE FOODS BASED ON
-         REMAIN NUTRIENTS IN NUTRIENTS TABLE IN DATABASE"""
-        # this query will give us available foods based on quantity of ingredients remain for user
-        sql = """
-                SELECT DISTINCT food.id FROM ((foods_ingredients INNER JOIN food
-                ON foods_ingredients.Food_id = food.id)
-                INNER JOIN nutrients ON Foods_ingredients.Food_ingredient = nutrients.id) 
-                WHERE nutrients.Quantity > foods_ingredients.Ingredient_quantity
-                """
-        try:
-            self.cursor.execute(sql)
-            available_foods = self.cursor.fetchall()
-            food_id = random.choice(available_foods)[0]
-            return self.display_food(food_id)
-        except Exception as e:
-            return e
+    def available_meal(self):
+        available_meals = []
+        self.cursor.execute("SELECT id, quantity FROM nutrients")
+        nutrients = self.cursor.fetchall()
+        nutrients = {k: v for k, v in nutrients}
+        self.cursor.execute("SELECT id FROM food")
+        foods = self.cursor.fetchall()
+        sql = """SELECT food_ingredient, ingredient_quantity FROM foods_ingredients WHERE Food_id = %s"""
+        for food in foods:
+            self.cursor.execute(sql, food)
+            food_items = self.cursor.fetchall()
+            food_items = {k: v for k, v in food_items}
+            for i in food_items:
+                if food_items[i] > nutrients[i]:
+                    break
+            else:
+                available_meals.append(food[0])
+        return self.display_food(random.choice(available_meals))
 
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    # planner.add_food("sth24", "nothing")
-    # planner.add_food("sth25", "nothing")
-    # planner.add_food("sth26", "nothing")
-    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    # planner.insertWeeklyMeals("Monday", "L", "sth26")
-    # print(planner.quick_meal())
-    planner.delete_food("sth26")
-    print(planner.shopping_cart)
+    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    planner.add_food("sth24", "nothing")
+    planner.add_food("sth25", "nothing")
+    planner.add_food("sth26", "nothing")
+    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    planner.insertWeeklyMeals("Monday", "L", "sth26")
+    # planner.delete_food("sth26")
+    # print(planner.shopping_list)
+    print(planner.available_meal())
+    print(planner.shopping_list)
+    planner.update_nutrients_inventory(planner.shopping_list)
+    print(planner.shopping_list)
+
+
+
