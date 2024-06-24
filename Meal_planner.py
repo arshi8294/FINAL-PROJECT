@@ -335,23 +335,41 @@ class MealPlanner:
                 available_meals.append(food[0])
         return self.display_food(random.choice(available_meals))
 
+    def show_each_day_meals(self, day):
+        meals = ['B', 'L', 'D']
+        daily_meals = []
+        sql = """
+            SELECT Name from food inner join weekly_meals ON food.id = weekly_meals.Meal_food 
+            WHERE Meal_day = %s and Meal_category = %s"""
+        for i in meals:
+            self.cursor.execute(sql, (day, i))
+            s = self.cursor.fetchone()
+            daily_meals.append(s[0])
+        return daily_meals
+
+
+
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    planner.add_food("sth24", "nothing")
-    planner.add_food("sth25", "nothing")
-    planner.add_food("sth26", "nothing")
-    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    planner.insertWeeklyMeals("Monday", "L", "sth26")
+    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    # planner.add_food("sth24", "nothing")
+    # planner.add_food("sth25", "nothing")
+    # planner.add_food("sth26", "nothing")
+    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    # planner.insertWeeklyMeals("Monday", "L", "sth26")
     # planner.delete_food("sth26")
     # print(planner.shopping_list)
-    print(planner.available_meal())
-    print(planner.shopping_list)
-    planner.update_nutrients_inventory(planner.shopping_list)
-    print(planner.shopping_list)
-
+    # print(planner.available_meal())
+    # print(planner.shopping_list)
+    # planner.update_nutrients_inventory(planner.shopping_list)
+    # print(planner.shopping_list)
+    days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    # for day in days:
+    #     for meal in ['B', 'L', 'D']:
+    #         planner.insertWeeklyMeals(day, meal, 'sth24')
+    # print(planner.shopping_list)
 
 

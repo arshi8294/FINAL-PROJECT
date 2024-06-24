@@ -6,21 +6,18 @@ import Meal_planner as Mp
 class FirstWindow:
     def __init__(self):
         self.root = ctk.CTk()
+        self.Mp1 = Mp.MealPlanner()
         self.root.title("Meal Planner")
-        self.root.geometry("500x500")
+        self.root.geometry("800x600")
         self.root.resizable(False, False)
         self.menu_bar()
-        self.frame1 = ctk.CTkFrame(master=self.root)
-        self.frame1.pack(side='top', fill='both')
-        self.labeltable = ctk.CTkLabel(master=self.frame1, text="place for table")
-        self.labeltable.pack(fill='both')
-
+        self.main_frame = ctk.CTkFrame(self.root, bg_color='white', fg_color='white')
+        self.main_frame.pack(fill='both', expand=True)
+        self.home_page()
         self.root.mainloop()
 
     def menu_bar(self):
-        menu_items = ['Add food', 'Create and edit weekly meals plan', 'Add nutrients']
-        commands_lst = []  # a list of functions for buttons
-        buttons_list = []
+        menu_buttons = {"Home Page": self.home_page, "Food_Page": self.food_page}
 
         def menuframe():
             def collapse_menu():
@@ -34,11 +31,12 @@ class FirstWindow:
             self.menubar_frame.place(x=0, y=40)  # better to be placed
             self.menu_btn.configure(text='X', command=collapse_menu)
 
-            # apply buttons on menu and save them in a list, so we can configure them later
-            for i in menu_items:
-                btn = ctk.CTkButton(master=self.menubar_frame, text=f'{i}', bg_color='black', fg_color='black')
-                btn.pack(fill='x', pady=5)
-                buttons_list.append(btn)
+            btn1 = ctk.CTkButton(master=self.menubar_frame, text='Home page', bg_color='black',
+                                 fg_color='black', command=lambda: self.switch_pages(self.home_page))
+            btn1.pack(fill='x', pady=5)
+            btn2 = ctk.CTkButton(master=self.menubar_frame, text='Food page', bg_color='black',
+                                 fg_color='black', command=lambda: self.switch_pages(self.food_page))
+            btn2.pack(fill='x', pady=5)
 
         self.menubtn_frame = ctk.CTkFrame(master=self.root, fg_color='black', bg_color='black')
         self.menubtn_frame.pack(side='top', fill='x')
@@ -56,6 +54,46 @@ class FirstWindow:
         self.contactus_btn = ctk.CTkButton(master=self.menubtn_frame, text="contact us",
                                            font=('Arial', 15), fg_color='black', width=5)
         self.contactus_btn.pack(side='right')
+
+    def home_page(self):
+        days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        meals = ['Breakfast', 'Lunch', 'Dinner']
+        home_page = ctk.CTkFrame(master=self.main_frame, bg_color='black')
+        home_page.pack(fill='both', expand=True)
+        for i in range(8):
+            home_page.rowconfigure(i, weight=1)
+        for i in range(4):
+            home_page.columnconfigure(i, weight=1)
+        empty_label = ctk.CTkLabel(master=home_page, text='', width=20, height=10)
+        empty_label.grid(row=0, column=0)
+        for i in range(1, 8):
+            label = ctk.CTkLabel(master=home_page, text=days[i - 1], font=('Arial', 15, 'bold', 'underline'),
+                                 width=20,
+                                 height=10)
+            label.grid(row=i, column=0)
+        for i in range(1, 4):
+            label = ctk.CTkLabel(master=home_page, text=meals[i - 1], font=('Arial', 15, 'bold', 'underline'),
+                                 width=20,
+                                 height=10)
+            label.grid(row=0, column=i)
+        for i in range(1, 8):
+            daily_meals = self.Mp1.show_each_day_meals(days[i - 1])
+            for j in range(1, 4):
+                label = ctk.CTkLabel(master=home_page, text=daily_meals[j - 1], font=('Arial', 15),
+                                     width=20, height=10)
+                label.grid(row=i, column=j)
+
+    def food_page(self):
+        food_page = ctk.CTkFrame(master=self.main_frame)
+        foodpage_label = ctk.CTkLabel(master=food_page, text="Food Page", font=('Arial', 20), pady=50)
+        food_page.pack(fill='both', expand=True)
+        foodpage_label.pack(fill='both', expand=True)
+
+    def switch_pages(self, page):
+        for frame in self.main_frame.winfo_children():
+            frame.destroy()
+            self.root.update()
+        page()
 
 
 if __name__ == "__main__":
