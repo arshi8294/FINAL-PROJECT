@@ -19,41 +19,40 @@ class FirstWindow:
     def menu_bar(self):
         menu_buttons = {"Home Page": self.home_page, "Food_Page": self.food_page}
 
-        def menuframe():
+        def menu_frame():
             def collapse_menu():
                 """this function collapses the menu after click on the menu btn when menu is opened"""
-                self.menubar_frame.destroy()
-                self.menu_btn.configure(text='≡', command=menuframe)
+                menubar_frame.destroy()
+                menu_btn.configure(text='≡', command=menu_frame)
 
             height = self.root.winfo_screenheight()
-            self.menubar_frame = ctk.CTkFrame(master=self.root, height=height, width=200, fg_color='black',
-                                              bg_color='black')
-            self.menubar_frame.place(x=0, y=40)  # better to be placed
-            self.menu_btn.configure(text='X', command=collapse_menu)
+            menubar_frame = ctk.CTkFrame(master=self.root, height=height, width=200, fg_color='black', bg_color='black')
+            menubar_frame.place(x=0, y=40)  # better to be placed
+            menu_btn.configure(text='X', command=collapse_menu)
 
-            btn1 = ctk.CTkButton(master=self.menubar_frame, text='Home page', bg_color='black',
+            btn1 = ctk.CTkButton(master=menubar_frame, text='Home page', bg_color='black',
                                  fg_color='black', command=lambda: self.switch_pages(self.home_page))
             btn1.pack(fill='x', pady=5)
-            btn2 = ctk.CTkButton(master=self.menubar_frame, text='Food page', bg_color='black',
+            btn2 = ctk.CTkButton(master=menubar_frame, text='Food page', bg_color='black',
                                  fg_color='black', command=lambda: self.switch_pages(self.food_page))
             btn2.pack(fill='x', pady=5)
 
-        self.menubtn_frame = ctk.CTkFrame(master=self.root, fg_color='black', bg_color='black')
-        self.menubtn_frame.pack(side='top', fill='x')
-        self.menubtn_frame.pack_propagate(False)  # used it to force the frame to have height 40
-        self.menubtn_frame.configure(height=40)
+        menu_buttons_frame = ctk.CTkFrame(master=self.root, fg_color='black', bg_color='black')
+        menu_buttons_frame.pack(side='top', fill='x')
+        menu_buttons_frame.pack_propagate(False)  # used it to force the frame to have height 40
+        menu_buttons_frame.configure(height=40)
 
-        self.menu_btn = ctk.CTkButton(master=self.menubtn_frame, text="≡", font=('Arial', 20, 'bold'),
-                                      fg_color='black', width=10, command=menuframe)
-        self.menu_btn.pack(side='left')
+        menu_btn = ctk.CTkButton(master=menu_buttons_frame, text="≡", font=('Arial', 20, 'bold'),
+                                 fg_color='black', width=10, command=menu_frame)
+        menu_btn.pack(side='left')
 
-        self.label1 = ctk.CTkLabel(master=self.menubtn_frame, text="Meal Planner application",
-                                   font=('Arial', 15, 'bold'), padx=5)
-        self.label1.pack(side='left')
+        label1 = ctk.CTkLabel(master=menu_buttons_frame, text="Meal Planner application",
+                              font=('Arial', 15, 'bold'), padx=5)
+        label1.pack(side='left')
 
-        self.contactus_btn = ctk.CTkButton(master=self.menubtn_frame, text="contact us",
-                                           font=('Arial', 15), fg_color='black', width=5)
-        self.contactus_btn.pack(side='right')
+        contactus_btn = ctk.CTkButton(master=menu_buttons_frame, text="contact us",
+                                      font=('Arial', 15), fg_color='black', width=5)
+        contactus_btn.pack(side='right')
 
     def home_page(self):
         days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -68,8 +67,7 @@ class FirstWindow:
         empty_label.grid(row=0, column=0)
         for i in range(1, 8):
             label = ctk.CTkLabel(master=home_page, text=days[i - 1], font=('Arial', 15, 'bold', 'underline'),
-                                 width=20,
-                                 height=10)
+                                 width=20, height=10)
             label.grid(row=i, column=0)
         for i in range(1, 4):
             label = ctk.CTkLabel(master=home_page, text=meals[i - 1], font=('Arial', 15, 'bold', 'underline'),

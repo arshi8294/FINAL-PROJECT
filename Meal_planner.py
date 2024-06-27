@@ -1,3 +1,4 @@
+# todo: create a function to update weekly meals 
 import mysql.connector
 import random
 
@@ -46,7 +47,7 @@ class MealPlanner:
             print(e)
             self.conn.rollback()
 
-    # Create a table of foods we have
+        # Create a table of foods we have
 
         sql = """
             CREATE TABLE IF NOT EXISTS food(
@@ -135,6 +136,34 @@ class MealPlanner:
         else:
             print(f"{food} added successfully")
 
+    def update_food(self, food: str, nutrients: dict, recipe: str):
+        """ This function is used to update the food from foods in database """
+        food_id = self.food_key(food)
+        # first of all we delete food nutrients that this food took from us
+        sql = """SELECT ID FROM weekly_meals WHERE Meal_food = %s"""
+        self.cursor.execute(sql, (food_id,))
+        food_usages = self.cursor.fetchall()
+        for i in food_usages:
+            self.anti_decrease_nutrients(food_id)
+
+        # now we delete previous ingredients this food took to update it
+        sql = "DELETE FROM foods_ingredients WHERE Food_id = %s"
+        try:
+            self.cursor.execute(sql, (food_id,))
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            print(e)
+        self.add_food_ingredients(food, nutrients)
+
+        # now we update recipie of food
+        sql = 'UPDATE food SET Recipie = %s WHERE id = %s'
+        self.cursor.execute(sql, (recipe, food_id))
+
+        # at last, we decrease new amounts of nutrients the food takes
+        for i in food_usages:
+            self.decrease_nutrients(food_id)
+
     def food_key(self, food):
         """
         this function is used to convert food which is food name to food_id which is id of that food in food table
@@ -146,6 +175,22 @@ class MealPlanner:
             print(e)
         else:
             return self.cursor.fetchone()[0]
+
+    def ingredient_key(self, ingredients):
+        """"
+        this function is used to convert the dictionary which contains nutrients name as keys to ingredients_dict
+        which contains nutrients id as keys and quantity as value
+        """
+        sql = "SELECT id FROM nutrients WHERE Name = %s "
+        ingredients_dict = {}
+        for i in ingredients.keys():
+            try:
+                self.cursor.execute(sql, (i,))
+                j = self.cursor.fetchone()[0]
+                ingredients_dict[j] = ingredients[i]
+            except Exception as e:
+                print(e)
+        return ingredients_dict
 
     def add_food_ingredients(self, food, ingredients: dict):
         """ This function is used to add ingredients of foods to the foods_ingredients table in the database;
@@ -168,24 +213,8 @@ class MealPlanner:
                     print(e)
                     self.conn.rollback()
 
-        def ingredient_key():
-            """"
-            this function is used to convert the dictionary which contains nutrients name as keys to ingredients_dict
-            which contains nutrients id as keys and quantity as value
-            """
-            sql = "SELECT id FROM nutrients WHERE Name = %s "
-            ingredients_dict = {}
-            for i in ingredients.keys():
-                try:
-                    self.cursor.execute(sql, (i,))
-                    j = self.cursor.fetchone()[0]
-                    ingredients_dict[j] = ingredients[i]
-                except Exception as e:
-                    print(e)
-            return ingredients_dict
-
         food_id = self.food_key(food)
-        ingredients_dict = ingredient_key()
+        ingredients_dict = self.ingredient_key(ingredients)
 
         sql = """
             INSERT INTO foods_ingredients(Food_id, Food_Ingredient, Ingredient_quantity) VALUES (%s, %s, %s)
@@ -230,7 +259,7 @@ class MealPlanner:
         except Exception as e:
             print(e)
         else:
-            food_ingredients = self.cursor.fetchall()
+            food_ingredients = self.cursor.fetchall()  # it returns a tuple of (ingredient, quantity of it)
 
             # in this part of code I used data of food_ingredients,
             # which are ingredient and quantity of it that needed for food, to create a query
@@ -239,6 +268,30 @@ class MealPlanner:
                  UPDATE nutrients SET Quantity =  Quantity-%s
                  WHERE id = %s;
                  """
+            try:
+                for i in food_ingredients:
+                    self.cursor.execute(sql, i)
+                    self.conn.commit()
+            except Exception as e:
+                print(e)
+                self.conn.rollback()
+
+    def anti_decrease_nutrients(self, food_id):
+        """This function is opposite of decrease_nutrients function, and it used when user want to update a food
+        or update the weekly meals"""
+
+        sql = """SELECT Ingredient_quantity, food_Ingredient  FROM foods_ingredients WHERE Food_id = %s"""
+        try:
+            self.cursor.execute(sql, (food_id,))
+        except Exception as e:
+            print(e)
+        else:
+            food_ingredients = self.cursor.fetchall()  # it returns a tuple of (ingredient, quantity of it)
+
+            sql = """
+                         UPDATE nutrients SET Quantity =  Quantity+%s
+                         WHERE id = %s;
+                         """
             try:
                 for i in food_ingredients:
                     self.cursor.execute(sql, i)
@@ -344,10 +397,11 @@ class MealPlanner:
         for i in meals:
             self.cursor.execute(sql, (day, i))
             s = self.cursor.fetchone()
-            daily_meals.append(s[0])
+            if s:
+                daily_meals.append(s[0])
+            else:
+                daily_meals.append('None')
         return daily_meals
-
-
 
 
 if __name__ == "__main__":
@@ -361,15 +415,8 @@ if __name__ == "__main__":
     # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
     # planner.insertWeeklyMeals("Monday", "L", "sth26")
     # planner.delete_food("sth26")
-    # print(planner.shopping_list)
+    print(planner.shopping_list)
     # print(planner.available_meal())
-    # print(planner.shopping_list)
     # planner.update_nutrients_inventory(planner.shopping_list)
-    # print(planner.shopping_list)
-    days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    # for day in days:
-    #     for meal in ['B', 'L', 'D']:
-    #         planner.insertWeeklyMeals(day, meal, 'sth24')
-    # print(planner.shopping_list)
-
-
+    planner.update_food('sth26', {'w': 1111}, 'cook it')
+    print(planner.shopping_list)
