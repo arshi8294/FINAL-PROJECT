@@ -95,8 +95,8 @@ class MealPlanner:
                 Meal_food INT NOT NULL,
                 PRIMARY KEY (id),
                 CONSTRAINT Meal_food_fk FOREIGN KEY (Meal_food) REFERENCES food(id),
-                # The Constraint below is required for the table to prevent same meals on each day
-                CONSTRAINT Meal_unique UNIQUE (Meal_day, Meal_category)   
+                # The Constraint below is required for the table to prevent same meals on each dates
+                CONSTRAINT Meal_unique UNIQUE (Meal_date, Meal_category)   
                 );"""
         try:
             self.cursor.execute(sql)
@@ -237,21 +237,41 @@ class MealPlanner:
         Although one of the most important functions of the application executed at the end of this function,
         and it's updating our nutrients storage after a meal selected completely """
 
+        # first we make sure that this meal didn't plan before
+        sql = "SELECT Meal_food FROM weekly_meals WHERE Meal_date = %s and Meal_category = %s"
+        self.cursor.execute(sql, (date.strftime("%Y-%m-%d"), meal))
+        previous_food = self.cursor.fetchone()
         food_id = self.food_key(food)
-        sql = """
-            INSERT INTO weekly_meals(meal_day, meal_date, meal_category, meal_food)
-            VALUES (%s, %s, %s, %s);
-            """
-        try:
-            self.cursor.execute(sql, (date.strftime('%A'), date.strftime('%Y-%m-%d'), meal, food_id))
-            self.conn.commit()
-        except Exception as e:
-            print(e)
-            self.conn.rollback()
-        else:
-            print("your meal added successfully")
 
-        self.decrease_nutrients(food_id)
+        if not previous_food:
+            sql = """
+                INSERT INTO weekly_meals(meal_day, meal_date, meal_category, meal_food)
+                VALUES (%s, %s, %s, %s);
+                """
+            try:
+                self.cursor.execute(sql, (date.strftime('%A'), date.strftime('%Y-%m-%d'), meal, food_id))
+                self.conn.commit()
+            except Exception as e:
+                print(e)
+                self.conn.rollback()
+            else:
+                print("your meal added successfully")
+
+            self.decrease_nutrients(food_id)
+        # now if it was planned before we need to update it
+        else:
+            self.anti_decrease_nutrients(previous_food[0])  # first of all return all nutrients that food took
+            sql = """
+            UPDATE weekly_meals SET meal_food = %s WHERE meal_date = %s AND meal_category = %s
+            """
+            try:
+                self.cursor.execute(sql, (food_id, date.strftime('%Y-%m-%d'), meal))
+                self.conn.commit()
+            except Exception as e:
+                print(e)
+            else:
+                self.decrease_nutrients(food_id)
+                print("your weekly meal updated successfully")
 
     def decrease_nutrients(self, food_id):
         # The next query is to get how much and what ingredient selected food need
@@ -409,14 +429,14 @@ class MealPlanner:
 if __name__ == "__main__":
     planner = MealPlanner()
     # print((dt.datetime.now()+dt.timedelta(days=1)).strftime("%Y-%m-%d"))
-    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    planner.add_food("sth24", "nothing")
-    planner.add_food("sth25", "nothing")
-    planner.add_food("sth26", "nothing")
-    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    planner.insertWeeklyMeals(dt.datetime.now()+dt.timedelta(days=1), "L", "sth26")
+    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    # planner.add_food("sth24", "nothing")
+    # planner.add_food("sth25", "nothing")
+    # planner.add_food("sth26", "nothing")
+    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    planner.insertWeeklyMeals(dt.datetime.now()+dt.timedelta(days=3), "L", "sth26")
     # # # planner.delete_food("sth26")
     # print(planner.shopping_list)
     # # print(planner.available_meal())
