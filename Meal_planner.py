@@ -1,6 +1,7 @@
 # todo: create a function to update weekly meals 
 import mysql.connector
 import random
+import datetime as dt
 
 
 class MealPlanner:
@@ -89,6 +90,7 @@ class MealPlanner:
                 CREATE TABLE IF NOT EXISTS Weekly_Meals(
                 id INT NOT NULL AUTO_INCREMENT,
                 Meal_day VARCHAR(10) NOT NULL,
+                Meal_date DATE NOT NULL,
                 Meal_category VARCHAR(1) NOT NULL,
                 Meal_food INT NOT NULL,
                 PRIMARY KEY (id),
@@ -228,7 +230,7 @@ class MealPlanner:
                 self.conn.rollback()
         print(f"{food}'s ingredients added successfully")
 
-    def insertWeeklyMeals(self, day, meal, food):
+    def insertWeeklyMeals(self, date, meal, food):
         """This function is used to insert meals of a week to weekly_meals table in the database.
         It takes a day of the week and a meal name (like breakfast, lunch or dinner) and the food user want for that
         meal. In this function, food_key another time used to convert food name to its id.
@@ -237,11 +239,11 @@ class MealPlanner:
 
         food_id = self.food_key(food)
         sql = """
-            INSERT INTO weekly_meals(meal_day, meal_category, meal_food)
-            VALUES (%s, %s, %s);
+            INSERT INTO weekly_meals(meal_day, meal_date, meal_category, meal_food)
+            VALUES (%s, %s, %s, %s);
             """
         try:
-            self.cursor.execute(sql, (day, meal, food_id))
+            self.cursor.execute(sql, (date.strftime('%A'), date.strftime('%Y-%m-%d'), meal, food_id))
             self.conn.commit()
         except Exception as e:
             print(e)
@@ -388,14 +390,14 @@ class MealPlanner:
                 available_meals.append(food[0])
         return self.display_food(random.choice(available_meals))
 
-    def show_each_day_meals(self, day):
+    def show_each_day_meals(self, date):
         meals = ['B', 'L', 'D']
         daily_meals = []
         sql = """
             SELECT Name from food inner join weekly_meals ON food.id = weekly_meals.Meal_food 
             WHERE Meal_day = %s and Meal_category = %s"""
         for i in meals:
-            self.cursor.execute(sql, (day, i))
+            self.cursor.execute(sql, (date.strftime('%A'), i))
             s = self.cursor.fetchone()
             if s:
                 daily_meals.append(s[0])
@@ -406,17 +408,18 @@ class MealPlanner:
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    # planner.add_food("sth24", "nothing")
-    # planner.add_food("sth25", "nothing")
-    # planner.add_food("sth26", "nothing")
-    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    # planner.insertWeeklyMeals("Monday", "L", "sth26")
-    # planner.delete_food("sth26")
-    print(planner.shopping_list)
-    # print(planner.available_meal())
-    # planner.update_nutrients_inventory(planner.shopping_list)
-    planner.update_food('sth26', {'w': 1111}, 'cook it')
-    print(planner.shopping_list)
+    # print((dt.datetime.now()+dt.timedelta(days=1)).strftime("%Y-%m-%d"))
+    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    planner.add_food("sth24", "nothing")
+    planner.add_food("sth25", "nothing")
+    planner.add_food("sth26", "nothing")
+    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    planner.insertWeeklyMeals(dt.datetime.now()+dt.timedelta(days=1), "L", "sth26")
+    # # # planner.delete_food("sth26")
+    # print(planner.shopping_list)
+    # # print(planner.available_meal())
+    # # planner.update_nutrients_inventory(planner.shopping_list)
+    # planner.update_food('sth26', {'w': 1111}, 'cook it')
+    # print(planner.shopping_list)

@@ -1,6 +1,7 @@
 # Todo : create functions of buttons and maybe fix menu filling issue
 import customtkinter as ctk
 import Meal_planner as Mp
+import datetime as dt
 
 
 class FirstWindow:
@@ -55,7 +56,10 @@ class FirstWindow:
         contactus_btn.pack(side='right')
 
     def home_page(self):
-        days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        """at the homepage a frame is displayed inside main frame which includes planned meals for next seven days
+        by using datetime we send date of next seven days to database and get each date's meals"""
+
+        now = dt.datetime.now()
         meals = ['Breakfast', 'Lunch', 'Dinner']
         home_page = ctk.CTkFrame(master=self.main_frame, bg_color='black')
         home_page.pack(fill='both', expand=True)
@@ -66,7 +70,9 @@ class FirstWindow:
         empty_label = ctk.CTkLabel(master=home_page, text='', width=20, height=10)
         empty_label.grid(row=0, column=0)
         for i in range(1, 8):
-            label = ctk.CTkLabel(master=home_page, text=days[i - 1], font=('Arial', 15, 'bold', 'underline'),
+            label = ctk.CTkLabel(master=home_page,
+                                 text=f'{(now + dt.timedelta(days=i)).strftime('%A')}\n{(now + dt.timedelta(days=i)).strftime('%m-%d')}',
+                                 font=('Arial', 15, 'bold', 'underline'),
                                  width=20, height=10)
             label.grid(row=i, column=0)
         for i in range(1, 4):
@@ -75,7 +81,7 @@ class FirstWindow:
                                  height=10)
             label.grid(row=0, column=i)
         for i in range(1, 8):
-            daily_meals = self.Mp1.show_each_day_meals(days[i - 1])
+            daily_meals = self.Mp1.show_each_day_meals(now + dt.timedelta(days=i))
             for j in range(1, 4):
                 label = ctk.CTkLabel(master=home_page, text=daily_meals[j - 1], font=('Arial', 15),
                                      width=20, height=10)
