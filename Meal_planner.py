@@ -392,6 +392,9 @@ class MealPlanner:
             self.conn.rollback()
 
     def available_meal(self):
+        """
+        this function will return the food which its nutrients are available in our storage
+        """
         available_meals = []
         self.cursor.execute("SELECT id, quantity FROM nutrients")
         nutrients = self.cursor.fetchall()
@@ -408,7 +411,7 @@ class MealPlanner:
                     break
             else:
                 available_meals.append(food[0])
-        return self.display_food(random.choice(available_meals))
+        return self.display_food(random.choice(available_meals)) if available_meals else 0
 
     def show_each_day_meals(self, date):
         meals = ['B', 'L', 'D']

@@ -10,7 +10,7 @@ class FirstWindow:
         self.Mp1 = Mp.MealPlanner()
         self.root.title("Meal Planner")
         self.root.geometry("800x600")
-        self.root.resizable(False, False)
+        # self.root.resizable(False, False)
         self.menu_bar()
         self.main_frame = ctk.CTkFrame(self.root, bg_color='white', fg_color='white')
         self.main_frame.pack(fill='both', expand=True)
@@ -51,9 +51,10 @@ class FirstWindow:
                               font=('Arial', 15, 'bold'), padx=5)
         label1.pack(side='left')
 
-        contactus_btn = ctk.CTkButton(master=menu_buttons_frame, text="contact us",
-                                      font=('Arial', 15), fg_color='black', width=5)
-        contactus_btn.pack(side='right')
+        quick_food_btn = ctk.CTkButton(master=menu_buttons_frame, text="Quick Meal",
+                                       command=lambda: self.switch_pages(self.show_quickmeal),
+                                       font=('Arial', 20, 'bold'), fg_color='black', width=5)
+        quick_food_btn.pack(side='right')
 
     def home_page(self):
         """at the homepage a frame is displayed inside main frame which includes planned meals for next seven days
@@ -86,6 +87,60 @@ class FirstWindow:
                 label = ctk.CTkLabel(master=home_page, text=daily_meals[j - 1], font=('Arial', 15),
                                      width=20, height=10)
                 label.grid(row=i, column=j)
+
+    def show_quickmeal(self):
+        def use_quickmeal(food):
+            food_id = self.Mp1.food_key(food)
+            self.Mp1.decrease_nutrients(food_id)
+            self.switch_pages(self.home_page)
+
+        quickmeal_page = ctk.CTkFrame(master=self.main_frame, bg_color='black')
+        quickmeal_page.pack(fill='both', expand=True)
+
+        quick_meal = self.Mp1.available_meal()
+        if not quick_meal:
+            ctk.CTkLabel(master=quickmeal_page,
+                         text='there is no available food with nutrients you have', font=('Times', 30, 'bold')).pack(side='top')
+            back_home_button = ctk.CTkButton(master=quickmeal_page, text='Back to home',
+                                             command=lambda: self.switch_pages(self.home_page))
+            back_home_button.pack(side='top')
+            return 0
+        quickmeal_frame = ctk.CTkFrame(master=quickmeal_page, bg_color='#5A5F63', fg_color='#63520B')
+        quickmeal_frame.pack(fill='y', expand=True)
+        quickmeal_frame.columnconfigure(0, weight=1)
+        rows = 4
+        for i in quick_meal[1]:
+            rows += 1
+        for i in range(rows):
+            quickmeal_frame.rowconfigure(i, weight=0)
+        quickmeal_name = ctk.CTkLabel(master=quickmeal_frame, text=quick_meal[0], pady=15,
+                                      font=('Times', 25, 'bold', 'underline'))
+        quickmeal_name.grid(row=0, column=0)
+
+        food_ingredients = ctk.CTkLabel(master=quickmeal_frame, text='food ingredients', pady=15,
+                                        font=('Times', 25, 'bold'))
+        food_ingredients.grid(row=1, column=0)
+        rows = 2
+        for i in quick_meal[1]:
+            ctk.CTkLabel(master=quickmeal_frame, text=f"{i}: {quick_meal[1][i]}", font=('Helvetica', 20)).grid(row=rows,
+                                                                                                               column=0)
+            rows += 1
+        recipie = quick_meal[2]
+        food_recipe = ctk.CTkLabel(master=quickmeal_frame, text='food recipe', pady=15, font=('Times', 25, 'bold'))
+        food_recipe.grid(row=rows, column=0)
+        recipie_label = ctk.CTkLabel(master=quickmeal_frame, text=recipie, pady=10, font=('Arial', 15))
+        recipie_label.grid(rows=rows + 1, column=0)
+
+        # add two more rows for use and back home btn
+        quickmeal_frame.rowconfigure(rows + 11, weight=0)
+        quickmeal_frame.rowconfigure(rows + 10, weight=0)  # don't know why but it worked
+
+        use_button = ctk.CTkButton(master=quickmeal_frame, text='Used this recipie', fg_color='green',
+                                   command=lambda: use_quickmeal(quick_meal[0]))
+        back_home_button = ctk.CTkButton(master=quickmeal_frame, text='Back to home', fg_color='black',
+                                         command=lambda: self.switch_pages(self.home_page))
+        use_button.grid(row=rows + 10, column=0)
+        back_home_button.grid(row=rows + 11, column=0)
 
     def food_page(self):
         food_page = ctk.CTkFrame(master=self.main_frame)
