@@ -428,6 +428,25 @@ class MealPlanner:
                 daily_meals.append('None')
         return daily_meals
 
+    def show_breakfasts(self):
+        sql = """SELECT Name from food where Is_Breakfast = 1"""
+        self.cursor.execute(sql)
+        breakfasts = self.cursor.fetchall()
+        if not breakfasts:
+            return []
+        breakfasts = [i[0] for i in breakfasts]
+        return breakfasts
+
+    def show_lunch_and_dinner(self):
+        sql = """SELECT Name from food where Is_Breakfast = 0"""
+        self.cursor.execute(sql)
+        dinners = self.cursor.fetchall()
+        if not dinners:
+            return []
+        dinners = [i[0] for i in dinners]
+        return dinners
+
+
 
 if __name__ == "__main__":
     planner = MealPlanner()
@@ -440,6 +459,8 @@ if __name__ == "__main__":
     # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
     # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
     planner.insertWeeklyMeals(dt.datetime.now()+dt.timedelta(days=3), "L", "sth26")
+    print(planner.show_breakfasts())
+    print(planner.show_lunch_and_dinner())
     # # # planner.delete_food("sth26")
     # print(planner.shopping_list)
     # # print(planner.available_meal())

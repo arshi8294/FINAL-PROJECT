@@ -18,7 +18,7 @@ class FirstWindow:
         self.root.mainloop()
 
     def menu_bar(self):
-        menu_buttons = {"Home Page": self.home_page, "Food_Page": self.food_page}
+        menu_buttons = {"Home Page": self.home_page, "Food_Page": self.set_meals}
 
         def menu_frame():
             def collapse_menu():
@@ -31,12 +31,12 @@ class FirstWindow:
             menubar_frame.place(x=0, y=40)  # better to be placed
             menu_btn.configure(text='X', command=collapse_menu)
 
-            btn1 = ctk.CTkButton(master=menubar_frame, text='Home page', bg_color='black',
-                                 fg_color='black', command=lambda: self.switch_pages(self.home_page))
-            btn1.pack(fill='x', pady=5)
-            btn2 = ctk.CTkButton(master=menubar_frame, text='Food page', bg_color='black',
-                                 fg_color='black', command=lambda: self.switch_pages(self.food_page))
-            btn2.pack(fill='x', pady=5)
+            homePagebtn = ctk.CTkButton(master=menubar_frame, text='Home page', bg_color='black',
+                                        fg_color='black', command=lambda: self.switch_pages(self.home_page))
+            homePagebtn.pack(fill='x', pady=5)
+            setMealsbtn = ctk.CTkButton(master=menubar_frame, text='Set meals', bg_color='black',
+                                        fg_color='black', command=lambda: self.switch_pages(self.set_meals))
+            setMealsbtn.pack(fill='x', pady=5)
 
         menu_buttons_frame = ctk.CTkFrame(master=self.root, fg_color='black', bg_color='black')
         menu_buttons_frame.pack(side='top', fill='x')
@@ -100,7 +100,8 @@ class FirstWindow:
         quick_meal = self.Mp1.available_meal()
         if not quick_meal:
             ctk.CTkLabel(master=quickmeal_page,
-                         text='there is no available food with nutrients you have', font=('Times', 30, 'bold')).pack(side='top')
+                         text='there is no available food with nutrients you have', font=('Times', 30, 'bold')).pack(
+                side='top')
             back_home_button = ctk.CTkButton(master=quickmeal_page, text='Back to home',
                                              command=lambda: self.switch_pages(self.home_page))
             back_home_button.pack(side='top')
@@ -142,11 +143,56 @@ class FirstWindow:
         use_button.grid(row=rows + 10, column=0)
         back_home_button.grid(row=rows + 11, column=0)
 
-    def food_page(self):
-        food_page = ctk.CTkFrame(master=self.main_frame)
-        foodpage_label = ctk.CTkLabel(master=food_page, text="Food Page", font=('Arial', 20), pady=50)
-        food_page.pack(fill='both', expand=True)
-        foodpage_label.pack(fill='both', expand=True)
+    def set_meals(self):
+        def submit(date, combo1, combo2, combo3):
+            if combo1.get():
+                self.Mp1.insertWeeklyMeals(date, 'B', combo1.get())
+            if combo2.get():
+                self.Mp1.insertWeeklyMeals(date, 'L', combo2.get())
+            if combo3.get():
+                self.Mp1.insertWeeklyMeals(date, 'D', combo3.get())
+
+
+        date = (dt.datetime.now() + dt.timedelta(days=1))
+        date_str = date.strftime('%A \n%Y-%m-%d')
+        lunch_dinners = self.Mp1.show_lunch_and_dinner()
+        breakfasts = self.Mp1.show_breakfasts()
+        meals = ['Breakfast', 'Lunch', 'Dinner']
+
+        set_meals_frame = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        set_meals_frame.pack(fill='both', expand=True)
+        date_frame = ctk.CTkFrame(master=set_meals_frame, width=400, height=100, fg_color='#1A1A24')
+        date_label = ctk.CTkLabel(master=date_frame, text=date_str, font=('Arial', 25, 'bold'), width=400, height=100,
+                                  fg_color='#1A1A24')
+        date_label.pack(side='top', fill='both')
+        date_frame.pack(side='top', pady=20)
+
+        meal_selection_frame = ctk.CTkFrame(master=set_meals_frame)
+        meal_selection_frame.pack(fill='both')
+        for i in range(3):
+            meal_selection_frame.rowconfigure(i, weight=1)
+        for i in range(2):
+            meal_selection_frame.columnconfigure(i, weight=1)
+
+        for i in range(len(meals)):
+            ctk.CTkLabel(master=meal_selection_frame, text=meals[i], pady=15,
+                         font=('Times New Roman', 20, 'bold')).grid(row=i, column=0)
+
+        # if breakfasts:
+        breakfast_btn = ctk.CTkComboBox(master=meal_selection_frame, values=[''] + breakfasts, width=100)
+        breakfast_btn.grid(row=0, column=1)
+        lunch_btn = ctk.CTkComboBox(master=meal_selection_frame, values=[''] + lunch_dinners, width=100)
+        lunch_btn.grid(row=1, column=1)
+        dinner_btn = ctk.CTkComboBox(master=meal_selection_frame, values=[''] + lunch_dinners, width=100)
+        dinner_btn.grid(row=2, column=1)
+
+        buttons_frame = ctk.CTkFrame(master=set_meals_frame, height=200, bg_color='#1A1A24', fg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=10)
+        submit_btn = ctk.CTkButton(master=buttons_frame, text='Submit', fg_color='green',
+                                   command=lambda: submit(date, breakfast_btn, lunch_btn, dinner_btn))
+        submit_btn.pack(side='left')
+        next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next')
+        next_day_btn.pack(side='left')
 
     def switch_pages(self, page):
         for frame in self.main_frame.winfo_children():
