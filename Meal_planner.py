@@ -418,9 +418,9 @@ class MealPlanner:
         daily_meals = []
         sql = """
             SELECT Name from food inner join weekly_meals ON food.id = weekly_meals.Meal_food 
-            WHERE Meal_day = %s and Meal_category = %s"""
+            WHERE Meal_date = %s and Meal_category = %s"""
         for i in meals:
-            self.cursor.execute(sql, (date.strftime('%A'), i))
+            self.cursor.execute(sql, (date.strftime("%Y-%m-%d"), i))
             s = self.cursor.fetchone()
             if s:
                 daily_meals.append(s[0])
@@ -450,15 +450,14 @@ class MealPlanner:
 
 if __name__ == "__main__":
     planner = MealPlanner()
-    # print((dt.datetime.now()+dt.timedelta(days=1)).strftime("%Y-%m-%d"))
-    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    # planner.add_food("sth24", "nothing")
-    # planner.add_food("sth25", "nothing")
-    # planner.add_food("sth26", "nothing")
-    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    planner.insertWeeklyMeals(dt.datetime.now()+dt.timedelta(days=3), "L", "sth26")
+    print((dt.datetime.now()+dt.timedelta(days=1)).strftime("%Y-%m-%d"))
+    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    planner.add_food("sth24", "nothing")
+    planner.add_food("sth25", "nothing")
+    planner.add_food("sth26", "nothing")
+    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
     print(planner.show_breakfasts())
     print(planner.show_lunch_and_dinner())
     # # # planner.delete_food("sth26")

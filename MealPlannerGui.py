@@ -7,6 +7,8 @@ import datetime as dt
 class FirstWindow:
     def __init__(self):
         self.root = ctk.CTk()
+        # this date used in set_meals function and in nxt func inside of it
+        self.date = dt.datetime.now() + dt.timedelta(days=1)
         self.Mp1 = Mp.MealPlanner()
         self.root.title("Meal Planner")
         self.root.geometry("800x600")
@@ -18,8 +20,6 @@ class FirstWindow:
         self.root.mainloop()
 
     def menu_bar(self):
-        menu_buttons = {"Home Page": self.home_page, "Food_Page": self.set_meals}
-
         def menu_frame():
             def collapse_menu():
                 """this function collapses the menu after click on the menu btn when menu is opened"""
@@ -89,6 +89,7 @@ class FirstWindow:
                 label.grid(row=i, column=j)
 
     def show_quickmeal(self):
+
         def use_quickmeal(food):
             food_id = self.Mp1.food_key(food)
             self.Mp1.decrease_nutrients(food_id)
@@ -152,8 +153,11 @@ class FirstWindow:
             if combo3.get():
                 self.Mp1.insertWeeklyMeals(date, 'D', combo3.get())
 
+        def nxt():
+            self.date = self.date + dt.timedelta(days=1)
+            self.switch_pages(self.set_meals)
 
-        date = (dt.datetime.now() + dt.timedelta(days=1))
+        date = self.date
         date_str = date.strftime('%A \n%Y-%m-%d')
         lunch_dinners = self.Mp1.show_lunch_and_dinner()
         breakfasts = self.Mp1.show_breakfasts()
@@ -178,7 +182,6 @@ class FirstWindow:
             ctk.CTkLabel(master=meal_selection_frame, text=meals[i], pady=15,
                          font=('Times New Roman', 20, 'bold')).grid(row=i, column=0)
 
-        # if breakfasts:
         breakfast_btn = ctk.CTkComboBox(master=meal_selection_frame, values=[''] + breakfasts, width=100)
         breakfast_btn.grid(row=0, column=1)
         lunch_btn = ctk.CTkComboBox(master=meal_selection_frame, values=[''] + lunch_dinners, width=100)
@@ -191,10 +194,13 @@ class FirstWindow:
         submit_btn = ctk.CTkButton(master=buttons_frame, text='Submit', fg_color='green',
                                    command=lambda: submit(date, breakfast_btn, lunch_btn, dinner_btn))
         submit_btn.pack(side='left')
-        next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next')
+        next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next', command=nxt)
         next_day_btn.pack(side='left')
 
     def switch_pages(self, page):
+        # this code must be applied on every page switchs except set_meals switchs to get back date
+        if page != self.set_meals:
+            self.date = dt.datetime.now() + dt.timedelta(days=1)
         for frame in self.main_frame.winfo_children():
             frame.destroy()
             self.root.update()
