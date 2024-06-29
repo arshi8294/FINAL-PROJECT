@@ -37,7 +37,7 @@ class MealPlanner:
         CREATE TABLE IF NOT EXISTS Nutrients(
         id INT NOT NULL AUTO_INCREMENT,
         Name VARCHAR(255) NOT NULL UNIQUE,
-        Quantity INT,
+        Quantity FLOAT,
         PRIMARY KEY (id)
         );
         """
@@ -72,7 +72,7 @@ class MealPlanner:
                 id INT NOT NULL AUTO_INCREMENT,
                 Food_id INT NOT NULL,
                 Food_ingredient INT NOT NULL,
-                Ingredient_quantity INT NOT NULL ,
+                Ingredient_quantity FLOAT NOT NULL ,
                 PRIMARY KEY (id),
                 CONSTRAINT FOOD_FK FOREIGN KEY (Food_id) REFERENCES food(id),
                 CONSTRAINT INGREDIENT_FK FOREIGN KEY (Food_ingredient) REFERENCES Nutrients(id),
@@ -122,19 +122,20 @@ class MealPlanner:
             else:
                 print(f"{i} added successfully to nutrients")
 
-    def add_food(self, food: str, recipie: str):
+    def add_food(self, food: str, recipie: str, isbreakfast: bool = False):
         """ This function is used to add food to the food table in the database and
         gets food name and food recipie and insert them into the food table in the database"""
 
         sql = """
-            INSERT INTO food(Name, Recipie) VALUES (%s, %s);
+            INSERT INTO food(Name, Recipie, Is_Breakfast) VALUES (%s, %s, %s);
             """
         try:
-            self.cursor.execute(sql, (food, recipie))
+            self.cursor.execute(sql, (food, recipie, isbreakfast))
             self.conn.commit()
         except Exception as e:
             print(e)
             self.conn.rollback()
+            raise ValueError('This food is added before')
         else:
             print(f"{food} added successfully")
 
@@ -451,18 +452,20 @@ class MealPlanner:
 if __name__ == "__main__":
     planner = MealPlanner()
     print((dt.datetime.now()+dt.timedelta(days=1)).strftime("%Y-%m-%d"))
-    planner.add_nutrients({"s": 1, "d": 5, "a": 4})
-    planner.add_food("sth24", "nothing")
-    planner.add_food("sth25", "nothing")
-    planner.add_food("sth26", "nothing")
-    planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
-    planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
-    planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
-    print(planner.show_breakfasts())
-    print(planner.show_lunch_and_dinner())
+    # planner.add_nutrients({"s": 1, "d": 5, "a": 4})
+    # planner.add_food("sth24", "nothing")
+    # planner.add_food("sth25", "nothing")
+    # planner.add_food("sth26", "nothing")
+    # planner.add_food_ingredients("sth24", {"a": 3, "d": 1})
+    # planner.add_food_ingredients("sth25", {"a": 1, "f": 4})
+    # planner.add_food_ingredients("sth26", {"b": 11, "c": 7})
+    # print(planner.show_breakfasts())
+    # print(planner.show_lunch_and_dinner())
     # # # planner.delete_food("sth26")
     # print(planner.shopping_list)
     # # print(planner.available_meal())
     # # planner.update_nutrients_inventory(planner.shopping_list)
     # planner.update_food('sth26', {'w': 1111}, 'cook it')
     # print(planner.shopping_list)
+
+    planner.add_food("nimroo", "nothing", True)

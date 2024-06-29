@@ -1,7 +1,9 @@
 # Todo : create functions of buttons and maybe fix menu filling issue
 import customtkinter as ctk
+from tkinter import messagebox
 import Meal_planner as Mp
 import datetime as dt
+import re
 
 
 class FirstWindow:
@@ -217,7 +219,8 @@ class FirstWindow:
                                        font=('Times', 25, 'bold'), fg_color='#1A1A24', bg_color='#1A1A24')
         food_page_title.pack(side='top', fill='both')
 
-        foods_names_frame = ctk.CTkScrollableFrame(master=foods_page_main, fg_color='white', bg_color='#1A1A24', height=10)
+        foods_names_frame = ctk.CTkScrollableFrame(master=foods_page_main, fg_color='#C8CFCF', bg_color='#1A1A24',
+                                                   height=100)
         foods_names_frame.pack(side='top', fill='x', pady=20)
         foods_names_frame.columnconfigure(0, weight=1)
         for i in range(len(all_foods)):
@@ -225,16 +228,167 @@ class FirstWindow:
         btns_lst = []
         for i in range(len(all_foods)):
             btn = ctk.CTkButton(master=foods_names_frame, text=all_foods[i], hover_color='gray', anchor='center',
-                                font=('Arial', 15), bg_color='#1A1A24', fg_color='#1A1A24',
+                                font=('Arial', 15), fg_color='#1A1A24',
                                 command=lambda i=i: show_food(all_foods[i]), border_width=1, border_color='white')
             btns_lst.append(btn)
         for i in range(len(btns_lst)):
             btns_lst[i].grid(row=i, column=0)
+
+        buttons_frame = ctk.CTkFrame(master=foods_page_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=10)
+        add_button = ctk.CTkButton(master=buttons_frame, text='Add Food', fg_color='cyan', font=('Arial', 15, 'bold'),
+                                   command=lambda: self.switch_pages(self.add_food))
+        add_button.pack(side='right', pady=2)
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.home_page))
+        back_button.pack(side='right', padx=2)
+
     def foods_details(self):
+        def delete_food():
+            msg = messagebox.askyesno('Delete food',
+                                      f'Delete "{self.current_food}" removes it from your meal schedules\nAre you sure you want to delete it?')
+            if msg:
+                self.Mp1.delete_food(self.current_food)
+                messagebox.showinfo('Deleted food', f'{self.current_food} deleted')
+                self.switch_pages(self.foods_page)
+
         foods_details_main = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
         foods_details_main.pack(fill='both', expand=True)
-        foods_details_label = ctk.CTkLabel(master=foods_details_main, text=self.current_food)
-        foods_details_label.pack()
+        food_id = self.Mp1.food_key(self.current_food)
+        food_details = self.Mp1.display_food(food_id)
+
+        food_name_frame = ctk.CTkFrame(master=foods_details_main, fg_color='#3D0203', border_width=1,
+                                       border_color='black',
+                                       height=200)
+        food_name_frame.pack(side='top', fill='x')
+        food_name_label = ctk.CTkLabel(master=food_name_frame, fg_color='#3D0203', text=food_details[0],
+                                       font=('Times New Roman', 30, 'bold'))
+        food_name_label.pack(side='top', fill='both')
+        food_ingredients_title = ctk.CTkFrame(master=foods_details_main, height=50, fg_color='#1A1A24',
+                                              bg_color='#1A1A24')
+        food_ingredients_title.pack(side='top', fill='x', pady=(30, 10))
+        food_ingredients_label = ctk.CTkLabel(master=food_ingredients_title, text='Ingredients:',
+                                              font=('Times New Roman', 20, 'bold'), fg_color='#1A1A24',
+                                              bg_color='#1A1A24')
+        food_ingredients_label.pack(fill='both')
+        food_ingredients_frame = ctk.CTkFrame(master=foods_details_main, border_width=1, border_color='gray',
+                                              height=300)
+        food_ingredients_frame.pack(side='top', fill='x')
+
+        for i in food_details[1]:
+            ctk.CTkLabel(master=food_ingredients_frame, text=f"{i}: {food_details[1][i]}",
+                         font=('Arial', 15, 'bold'), anchor='w').pack(side='top', fill='x')
+
+        recipie_frame = ctk.CTkFrame(master=foods_details_main, border_width=1, border_color='gray')
+        recipie_frame.pack(side='top', fill='both', pady=30)
+        recipie_label = ctk.CTkLabel(master=recipie_frame, text=f'{food_details[2]}', font=('Arial', 15),
+                                     fg_color='#1A1A24', bg_color='#1A1A24')
+        recipie_label.pack(side='top', fill='both')
+
+        buttons_frame = ctk.CTkFrame(master=foods_details_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=10)
+        delete_button = ctk.CTkButton(master=buttons_frame, text='Delete Food', fg_color='red',
+                                      font=('Arial', 15, 'bold'), command=delete_food)
+        delete_button.pack(side='right', padx=2)
+        update_button = ctk.CTkButton(master=buttons_frame, text='Update Food', fg_color='green',
+                                      font=('Arial', 15, 'bold'))
+        update_button.pack(side='right', padx=2)
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.foods_page))
+        back_button.pack(side='right', padx=2)
+
+    def add_food(self):
+        def add_food_to_database(food_name: ctk.CTkEntry, ingredients: list, recipie: ctk.CTkTextbox,
+                                 is_breakfast: ctk.CTkCheckBox):
+            recipie = recipie.get(index1='1.0', index2='end')
+            is_breakfast = bool(is_breakfast)
+            food_name = food_name.get()
+            if not food_name:
+                try:
+                    raise ValueError('Food name entry is blank')
+                except ValueError as e:
+                    messagebox.showerror('Empty field', f"{e}")
+                    return 0
+
+            regex_food = re.compile(r'^\w+,\d+$')
+            all_ingredients = {}
+            for i in ingredients:
+                temp = i.get()
+
+                if temp:
+                    if not regex_food.match(temp):
+                        try:
+                            raise ValueError('Ingredient entry is not in format: ingredient,quantity')
+                        except ValueError as e:
+                            messagebox.showerror('Error', f"{e}")
+                            return 0
+                    ingredient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                    all_ingredients.update(ingredient_dict)
+
+            try:
+                self.Mp1.add_food(food_name, recipie, is_breakfast)
+            except Exception as e:
+                messagebox.showerror('Error', f'{e}')
+                return 0
+            self.Mp1.add_food_ingredients(food_name, all_ingredients)
+            messagebox.showinfo('Food added', f'{food_name} has been added to the foods list')
+            self.switch_pages(self.foods_page)
+
+        add_food_main = ctk.CTkScrollableFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        add_food_main.pack(fill='both', expand=True)
+        food_name_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        food_name_frame.pack(side='top', pady=(20, 10))
+        food_name_label = ctk.CTkLabel(master=food_name_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                       text='Food name ', font=('Arial', 15, 'bold'))
+        food_name_label.pack(side='top', pady=10)
+        food_name_entry = ctk.CTkEntry(master=food_name_frame, placeholder_text='food name', font=('Arial', 15))
+        food_name_entry.pack(side='top')
+
+        food_ingredients_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        food_ingredients_frame.pack(side='top', pady=15, padx=20)
+        food_ingredients_label = ctk.CTkLabel(master=food_ingredients_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                              text='Food ingredients ', font=('Arial', 15, 'bold'))
+        food_ingredients_label.pack(side='top')
+        ingredients_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        ingredients_frame.pack(side='top', pady=10, fill='both')
+        ingredients_list = []
+        for i in range(7):
+            ingredients_frame.rowconfigure(i, weight=1)
+        for i in range(3):
+            ingredients_frame.columnconfigure(i, weight=1)
+        for i in range(3):
+            for j in range(7):
+                ingredients_entry = ctk.CTkEntry(master=ingredients_frame, font=('Arial', 15),
+                                                 placeholder_text='format: Ingredient,Quantity', width=300,
+                                                 fg_color='#1A1A24', bg_color='#1A1A24')
+                ingredients_list.append(ingredients_entry)
+                ingredients_entry.grid(row=j, column=i)
+
+        recipie_title_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        recipie_title_frame.pack(side='top', fill='x', pady=5)
+        recipie_title_label = ctk.CTkLabel(master=recipie_title_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                           text='Recipie', font=('Arial', 15, 'bold'))
+        recipie_title_label.pack(side='top', fill='both')
+        recipie_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24', height=200)
+        recipie_frame.pack(side='top', fill='x')
+        recipie_text = ctk.CTkTextbox(master=recipie_frame, width=500, height=200, fg_color='gray')
+        recipie_text.pack(side='top')
+
+        chk_btn_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24', height=50, width=100)
+        chk_btn_frame.pack(side='top', fill='x', pady=10, padx=20)
+        isbreakfast = ctk.CTkCheckBox(chk_btn_frame, fg_color='#1A1A24', bg_color='#1A1A24', text='Breakfast',
+                                      height=20, font=('Arial', 15))
+        isbreakfast.pack(side='left')
+
+        buttons_frame = ctk.CTkFrame(master=add_food_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=(20, 10))
+        add_food_button = ctk.CTkButton(master=buttons_frame, text='Add', font=('Arial', 15, 'bold'), fg_color='green',
+                                        command=lambda: add_food_to_database(food_name_entry, ingredients_list,
+                                                                             recipie_text, isbreakfast))
+        add_food_button.pack(side='right', padx=2)
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.foods_page))
+        back_button.pack(side='right', padx=2)
 
     def switch_pages(self, page):
         # this code must be applied on every page switches except set_meals switches to get back date
