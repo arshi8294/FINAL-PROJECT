@@ -291,8 +291,84 @@ class FirstWindow:
                                       font=('Arial', 15, 'bold'), command=delete_food)
         delete_button.pack(side='right', padx=2)
         update_button = ctk.CTkButton(master=buttons_frame, text='Update Food', fg_color='green',
-                                      font=('Arial', 15, 'bold'))
+                                      font=('Arial', 15, 'bold'),
+                                      command=lambda: self.switch_pages(self.update_food_details))
         update_button.pack(side='right', padx=2)
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.foods_page))
+        back_button.pack(side='right', padx=2)
+
+    def update_food_details(self):
+        def update_food(food_name: str, ingredients: list, recipie: ctk.CTkTextbox):
+            recipie = recipie.get(index1='1.0', index2='end')
+            regex_ingredients = re.compile(r'^\w+,\d+(\.\d+)*$')
+            all_ingredients = {}
+            for i in ingredients:
+                temp = i.get()
+                if temp:
+                    if not regex_ingredients.match(temp):
+                        try:
+                            raise ValueError('Ingredient entry is not in format: ingredient,quantity')
+                        except ValueError as e:
+                            messagebox.showerror('Error', f"{e}")
+                            return 0
+                    ingredient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                    all_ingredients.update(ingredient_dict)
+
+            try:
+                self.Mp1.update_food(food_name, all_ingredients, recipie)
+            except Exception as e:
+                messagebox.showerror('Error', f'{e}')
+            messagebox.showinfo('Food updated', f'{food_name} has been updated successfully')
+            self.switch_pages(self.foods_page)
+
+        page_main = ctk.CTkFrame(self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        page_main.pack(fill='both', expand=True)
+        food_name_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        food_name_frame.pack(side='top', pady=(20, 10))
+        food_name_label = ctk.CTkLabel(master=food_name_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                       text=self.current_food, font=('Times', 30, 'bold'))
+        food_name_label.pack(side='top', pady=10)
+
+        food_ingredients_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        food_ingredients_frame.pack(side='top', pady=15, padx=20)
+        food_ingredients_label = ctk.CTkLabel(master=food_ingredients_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                              text='Food ingredients ', font=('Arial', 15, 'bold'))
+        food_ingredients_label.pack(side='top')
+        ingredients_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        ingredients_frame.pack(side='top', pady=10, fill='both')
+        ingredients_list = []
+        for i in range(7):
+            ingredients_frame.rowconfigure(i, weight=1)
+        for i in range(3):
+            ingredients_frame.columnconfigure(i, weight=1)
+        for i in range(3):
+            for j in range(7):
+                ingredients_entry = ctk.CTkEntry(master=ingredients_frame, font=('Arial', 15),
+                                                 placeholder_text='format: Ingredient,Quantity', width=300,
+                                                 fg_color='#1A1A24', bg_color='#1A1A24')
+                ingredients_list.append(ingredients_entry)
+                ingredients_entry.grid(row=j, column=i)
+        previous_ingredients = self.Mp1.show_food_ingredients(self.current_food)
+        for i in range(len(previous_ingredients)):
+            ingredients_list[i].insert(0, f'{previous_ingredients[i][0]},{previous_ingredients[i][1]}')
+
+        recipie_title_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        recipie_title_frame.pack(side='top', fill='x', pady=5)
+        recipie_title_label = ctk.CTkLabel(master=recipie_title_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                           text='Recipie', font=('Arial', 15, 'bold'))
+        recipie_title_label.pack(side='top', fill='both')
+        recipie_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24', height=200)
+        recipie_frame.pack(side='top', fill='x')
+        recipie_text = ctk.CTkTextbox(master=recipie_frame, width=500, height=200, fg_color='gray')
+        recipie_text.pack(side='top')
+        recipie_text.insert("1.0", f'{self.Mp1.show_food_recipies(self.current_food)}')
+
+        buttons_frame = ctk.CTkFrame(master=page_main, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=(20, 10))
+        update_btn = ctk.CTkButton(master=buttons_frame, text='Update', font=('Arial', 15, 'bold'), fg_color='green',
+                                   command=lambda: update_food(self.current_food, ingredients_list, recipie_text))
+        update_btn.pack(side='right', padx=2)
         back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
                                     command=lambda: self.switch_pages(self.foods_page))
         back_button.pack(side='right', padx=2)
@@ -310,7 +386,7 @@ class FirstWindow:
                     messagebox.showerror('Empty field', f"{e}")
                     return 0
 
-            regex_food = re.compile(r'^\w+,\d+$')
+            regex_food = re.compile(r'^\w+,\d+(\.\d+)*$')
             all_ingredients = {}
             for i in ingredients:
                 temp = i.get()

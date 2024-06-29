@@ -167,6 +167,21 @@ class MealPlanner:
         for i in food_usages:
             self.decrease_nutrients(food_id)
 
+    def show_food_ingredients(self, food_name):
+        food_id = self.food_key(food_name)
+        sql = """SELECT Name, Ingredient_quantity FROM foods_ingredients join nutrients
+         ON Food_ingredient=nutrients.id
+         WHERE Food_id = %s"""
+        self.cursor.execute(sql, (food_id, ))
+        food_ingredients = self.cursor.fetchall()
+        return food_ingredients
+
+    def show_food_recipies(self, food_name):
+        sql = """SELECT Recipie FROM food where Name = %s"""
+        self.cursor.execute(sql, (food_name, ))
+        recipie = self.cursor.fetchone()[0]
+        return recipie
+
     def food_key(self, food):
         """
         this function is used to convert food which is food name to food_id which is id of that food in food table
@@ -467,5 +482,5 @@ if __name__ == "__main__":
     # # planner.update_nutrients_inventory(planner.shopping_list)
     # planner.update_food('sth26', {'w': 1111}, 'cook it')
     # print(planner.shopping_list)
-
-    planner.add_food("nimroo", "nothing", True)
+    print(planner.show_food_ingredients('qeymah'))
+    print(planner.show_food_recipies('qeymah'))
