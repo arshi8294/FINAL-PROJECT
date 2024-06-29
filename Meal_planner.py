@@ -462,6 +462,12 @@ class MealPlanner:
         dinners = [i[0] for i in dinners]
         return dinners
 
+    def show_all_nutrients(self):
+        sql = """SELECT name, quantity FROM nutrients ORDER BY quantity DESC, Name """
+        self.cursor.execute(sql)
+        all_nutrients = self.cursor.fetchall()
+        return all_nutrients if all_nutrients else False
+
 
 
 if __name__ == "__main__":
@@ -484,3 +490,5 @@ if __name__ == "__main__":
     # print(planner.shopping_list)
     print(planner.show_food_ingredients('qeymah'))
     print(planner.show_food_recipies('qeymah'))
+    print(planner.show_all_nutrients())
+    print([i[0] for i in planner.show_all_nutrients() if planner.show_all_nutrients()])

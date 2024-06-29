@@ -1,4 +1,4 @@
-# Todo : create functions of buttons and maybe fix menu filling issue
+# Todo : fix set meals issues and create add nutrients page
 import customtkinter as ctk
 from tkinter import messagebox
 import Meal_planner as Mp
@@ -44,6 +44,15 @@ class FirstWindow:
             foods_btn = ctk.CTkButton(master=menubar_frame, text='Foods', bg_color='black',
                                       fg_color='black', command=lambda: self.switch_pages(self.foods_page))
             foods_btn.pack(fill='x', pady=5)
+            nutrients_btn = ctk.CTkButton(master=menubar_frame, text='Nutrients', bg_color='black',
+                                          fg_color='black',
+                                          command=lambda: self.switch_pages(self.show_nutrients))
+            nutrients_btn.pack(fill='x', pady=5)
+
+            add_nutrients_btn = ctk.CTkButton(master=menubar_frame, text='Add Nutrients', bg_color='black',
+                                              fg_color='black',
+                                              command=lambda: self.switch_pages(self.add_update_nutrients))
+            add_nutrients_btn.pack(fill='x', pady=5)
 
         menu_buttons_frame = ctk.CTkFrame(master=self.root, fg_color='black', bg_color='black')
         menu_buttons_frame.pack(side='top', fill='x')
@@ -69,7 +78,7 @@ class FirstWindow:
 
         now = dt.datetime.now()
         meals = ['Breakfast', 'Lunch', 'Dinner']
-        home_page = ctk.CTkFrame(master=self.main_frame, bg_color='black')
+        home_page = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
         home_page.pack(fill='both', expand=True)
         for i in range(8):
             home_page.rowconfigure(i, weight=1)
@@ -102,7 +111,7 @@ class FirstWindow:
             self.Mp1.decrease_nutrients(food_id)
             self.switch_pages(self.home_page)
 
-        quickmeal_page = ctk.CTkFrame(master=self.main_frame, bg_color='black')
+        quickmeal_page = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
         quickmeal_page.pack(fill='both', expand=True)
 
         quick_meal = self.Mp1.available_meal()
@@ -110,7 +119,9 @@ class FirstWindow:
             ctk.CTkLabel(master=quickmeal_page,
                          text='there is no available food with nutrients you have', font=('Times', 30, 'bold')).pack(
                 side='top')
-            back_home_button = ctk.CTkButton(master=quickmeal_page, text='Back to home',
+            buttons_frame = ctk.CTkFrame(master=quickmeal_page, fg_color='#1A1A24', bg_color='#1A1A24')
+            buttons_frame.pack(side='bottom', fill='x', pady=20)
+            back_home_button = ctk.CTkButton(master=buttons_frame, text='Back to home', fg_color="gray",
                                              command=lambda: self.switch_pages(self.home_page))
             back_home_button.pack(side='top')
             return 0
@@ -160,9 +171,10 @@ class FirstWindow:
             if combo3.get():
                 self.Mp1.insertWeeklyMeals(date, 'D', combo3.get())
 
-        def nxt():
+        def nxt(btn):
             self.date = self.date + dt.timedelta(days=1)
             self.switch_pages(self.set_meals)
+            btn.configure(state='normal')
 
         date = self.date
         date_str = date.strftime('%A \n%Y-%m-%d')
@@ -198,11 +210,13 @@ class FirstWindow:
 
         buttons_frame = ctk.CTkFrame(master=set_meals_frame, height=200, bg_color='#1A1A24', fg_color='#1A1A24')
         buttons_frame.pack(side='bottom', fill='x', pady=10)
+        next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next >', command=lambda: nxt(back_day_btn))
+        next_day_btn.pack(side='right', padx=2)
+        back_day_btn = ctk.CTkButton(master=buttons_frame, text='< Back', state='disabled')
+        back_day_btn.pack(side='right', padx=2)
         submit_btn = ctk.CTkButton(master=buttons_frame, text='Submit', fg_color='green',
                                    command=lambda: submit(date, breakfast_btn, lunch_btn, dinner_btn))
-        submit_btn.pack(side='left')
-        next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next', command=nxt)
-        next_day_btn.pack(side='left')
+        submit_btn.pack(side='right', padx=2)
 
     def foods_page(self):
         def show_food(food_name):
@@ -236,7 +250,7 @@ class FirstWindow:
 
         buttons_frame = ctk.CTkFrame(master=foods_page_main, fg_color='#1A1A24', bg_color='#1A1A24')
         buttons_frame.pack(side='bottom', fill='x', pady=10)
-        add_button = ctk.CTkButton(master=buttons_frame, text='Add Food', fg_color='cyan', font=('Arial', 15, 'bold'),
+        add_button = ctk.CTkButton(master=buttons_frame, text='Add Food', fg_color='green', font=('Arial', 15, 'bold'),
                                    command=lambda: self.switch_pages(self.add_food))
         add_button.pack(side='right', pady=2)
         back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
@@ -257,18 +271,18 @@ class FirstWindow:
         food_id = self.Mp1.food_key(self.current_food)
         food_details = self.Mp1.display_food(food_id)
 
-        food_name_frame = ctk.CTkFrame(master=foods_details_main, fg_color='#3D0203', border_width=1,
+        food_name_frame = ctk.CTkFrame(master=foods_details_main, fg_color='#1A1A24', border_width=1,
                                        border_color='black',
                                        height=200)
         food_name_frame.pack(side='top', fill='x')
-        food_name_label = ctk.CTkLabel(master=food_name_frame, fg_color='#3D0203', text=food_details[0],
+        food_name_label = ctk.CTkLabel(master=food_name_frame, fg_color='#1A1A24', text=food_details[0],
                                        font=('Times New Roman', 30, 'bold'))
         food_name_label.pack(side='top', fill='both')
         food_ingredients_title = ctk.CTkFrame(master=foods_details_main, height=50, fg_color='#1A1A24',
                                               bg_color='#1A1A24')
         food_ingredients_title.pack(side='top', fill='x', pady=(30, 10))
-        food_ingredients_label = ctk.CTkLabel(master=food_ingredients_title, text='Ingredients:',
-                                              font=('Times New Roman', 20, 'bold'), fg_color='#1A1A24',
+        food_ingredients_label = ctk.CTkLabel(master=food_ingredients_title, text='Ingredients',
+                                              font=('Times', 30, 'bold'), fg_color='#1A1A24',
                                               bg_color='#1A1A24')
         food_ingredients_label.pack(fill='both')
         food_ingredients_frame = ctk.CTkFrame(master=foods_details_main, border_width=1, border_color='gray',
@@ -277,10 +291,17 @@ class FirstWindow:
 
         for i in food_details[1]:
             ctk.CTkLabel(master=food_ingredients_frame, text=f"{i}: {food_details[1][i]}",
-                         font=('Arial', 15, 'bold'), anchor='w').pack(side='top', fill='x')
+                         font=('Arial', 15)).pack(side='top', fill='x')
+
+        recipie_title_frame = ctk.CTkFrame(master=foods_details_main, fg_color='#1A1A24', bg_color='#1A1A24',
+                                           height=100)
+        recipie_title_frame.pack(side='top', fill='x', pady=(30, 5))
+        recipie_title_label = ctk.CTkLabel(master=recipie_title_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                           text='Recipie', font=('Times', 30, 'bold'))
+        recipie_title_label.pack(side='top', fill='both')
 
         recipie_frame = ctk.CTkFrame(master=foods_details_main, border_width=1, border_color='gray')
-        recipie_frame.pack(side='top', fill='both', pady=30)
+        recipie_frame.pack(side='top', fill='both', pady=10)
         recipie_label = ctk.CTkLabel(master=recipie_frame, text=f'{food_details[2]}', font=('Arial', 15),
                                      fg_color='#1A1A24', bg_color='#1A1A24')
         recipie_label.pack(side='top', fill='both')
@@ -465,6 +486,103 @@ class FirstWindow:
         back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
                                     command=lambda: self.switch_pages(self.foods_page))
         back_button.pack(side='right', padx=2)
+
+    def add_update_nutrients(self):
+        def add_nutrient_to_database(entries: list):
+            nutrient_regex = re.compile(r'^\w+,-?\d+(\.\d+)*$')
+            existing_nutrient = [i[0] for i in self.Mp1.show_all_nutrients() if self.Mp1.show_all_nutrients()]
+            adding_nutrients = {}
+            updating_nutrients = {}
+            for i in entries:
+                temp = i.get()
+                if temp:
+                    if not nutrient_regex.match(temp):
+                        try:
+                            raise ValueError('Ingredient entry is not in format: ingredient,quantity')
+                        except ValueError as e:
+                            messagebox.showerror('Error', f"{e}")
+                            return 0
+
+                    if temp.split(',')[0] in existing_nutrient:
+                        nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                        updating_nutrients.update(nutrient_dict)
+
+                    else:
+                        new_nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                        adding_nutrients.update(new_nutrient_dict)
+
+            if adding_nutrients:
+                self.Mp1.add_nutrients(adding_nutrients)
+                messagebox.showinfo('Successful insert', 'Nutrients added to database successfully')
+            if updating_nutrients:
+                self.Mp1.update_nutrients_inventory(updating_nutrients)
+                messagebox.showinfo('Successful update', 'Nutrients inventory updated successfully')
+            self.switch_pages(self.home_page)
+
+        page_frame = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        page_frame.pack(fill='both', expand=True)
+        nutrients_title_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        nutrients_title_frame.pack(pady=20, side='top', fill='x')
+        nutrients_title = ctk.CTkLabel(master=nutrients_title_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                       text='Nutrients', font=('Times', 20, 'bold'))
+        nutrients_title.pack(fill='both')
+        add_nutrients_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        add_nutrients_frame.pack(fill='both', pady=15)
+
+        nutrients_list = []
+        for i in range(7):
+            add_nutrients_frame.rowconfigure(i, weight=1)
+        for i in range(3):
+            add_nutrients_frame.columnconfigure(i, weight=1)
+        for i in range(3):
+            for j in range(7):
+                ingredients_entry = ctk.CTkEntry(master=add_nutrients_frame, font=('Arial', 15),
+                                                 placeholder_text='format: Ingredient,Quantity', width=300,
+                                                 fg_color='#1A1A24', bg_color='#1A1A24')
+                nutrients_list.append(ingredients_entry)
+                ingredients_entry.grid(row=j, column=i)
+        buttons_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=(20, 10))
+        add_nutrients_button = ctk.CTkButton(master=buttons_frame, fg_color='green', text='Add Nutrients',
+                                             font=('Arial', 15, 'bold'),
+                                             command=lambda: add_nutrient_to_database(nutrients_list))
+        add_nutrients_button.pack(side='right', fill='x', padx=2)
+
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back To Homepage', fg_color='gray',
+                                    font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.home_page))
+        back_button.pack(side='right', padx=2)
+
+    def show_nutrients(self):
+        """Shows all the nutrients in the database"""
+        page_main_frame = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        page_main_frame.pack(fill='both', expand=True)
+        nutrients_title_frame = ctk.CTkFrame(master=page_main_frame, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+        nutrients_title_frame.pack(pady=20, side='top', fill='x')
+        nutrients_title = ctk.CTkLabel(master=nutrients_title_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                       text='Nutrients', font=('Times', 20, 'bold'))
+        nutrients_title.pack(fill='both')
+        show_nutrients_frame = ctk.CTkScrollableFrame(master=page_main_frame, fg_color='#1A1A24', bg_color='#1A1A24',
+                                                      height=100, width=500)
+        show_nutrients_frame.pack(side='top', pady=20)
+
+        for i in self.Mp1.show_all_nutrients():
+            try:
+                label = ctk.CTkLabel(master=show_nutrients_frame, text=f'{i[0]}\t\t\t{i[1]}', fg_color='gray'
+                                     , anchor='w', font=('Arial', 15, 'bold'))
+                label.pack(side='top', fill='x', expand=True, pady=5)
+            except Exception as e:
+                messagebox.showerror('Error', 'No nutrients found in database')
+                self.switch_pages(self.home_page)
+
+        buttons_frame = ctk.CTkFrame(master=page_main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        buttons_frame.pack(side='bottom', fill='x', pady=(20, 10))
+        back_button = ctk.CTkButton(master=buttons_frame, text='Back To Homepage', fg_color='gray',
+                                    font=('Arial', 15, 'bold'),
+                                    command=lambda: self.switch_pages(self.home_page))
+        back_button.pack(side='right', padx=2)
+
+
 
     def switch_pages(self, page):
         # this code must be applied on every page switches except set_meals switches to get back date
