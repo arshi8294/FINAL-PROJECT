@@ -69,8 +69,12 @@ class FirstWindow:
 
         quick_food_btn = ctk.CTkButton(master=menu_buttons_frame, text="Quick Meal",
                                        command=lambda: self.switch_pages(self.show_quickmeal),
-                                       font=('Arial', 20, 'bold'), fg_color='black', width=5)
-        quick_food_btn.pack(side='right')
+                                       font=('Arial', 15, 'bold'), fg_color='orange', width=5)
+        quick_food_btn.pack(side='right', padx=3)
+        shopping_cart_btn = ctk.CTkButton(master=menu_buttons_frame, text="Shopping List",
+                                          command=lambda :self.switch_pages(self.show_shopping_list),
+                                          font=('Arial', 15, 'bold'), fg_color='green', width=5)
+        shopping_cart_btn.pack(side='right', padx=3)
 
     def home_page(self):
         """at the homepage a frame is displayed inside main frame which includes planned meals for next seven days
@@ -78,10 +82,8 @@ class FirstWindow:
 
         now = dt.datetime.now()
         meals = ['Breakfast', 'Lunch', 'Dinner']
-        home_page_main = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
-        home_page_main.pack(fill='both', expand=True)
-        home_page = ctk.CTkScrollableFrame(master=home_page_main, fg_color='#1A1A24', bg_color='#1A1A24', height=500)
-        home_page.pack(fill='both')
+        home_page = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        home_page.pack(fill='both', expand=True)
         for i in range(8):
             home_page.rowconfigure(i, weight=1)
         for i in range(4):
@@ -102,9 +104,35 @@ class FirstWindow:
         for i in range(1, 8):
             daily_meals = self.Mp1.show_each_day_meals(now + dt.timedelta(days=i))
             for j in range(1, 4):
-                label = ctk.CTkLabel(master=home_page, text=daily_meals[j - 1], font=('Arial', 15),
+                label = ctk.CTkLabel(master=home_page, text=daily_meals[j - 1], font=('Arial', 15, 'bold'),
                                      width=20, height=10)
                 label.grid(row=i, column=j)
+
+    def show_shopping_list(self):
+        page_frame = ctk.CTkFrame(master=self.main_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+        page_frame.pack(fill='both', expand=True)
+        shopping_list = self.Mp1.shopping_list
+        if shopping_list:
+            title_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24', height=100)
+            title_frame.pack(fill='x', pady=20)
+            title = ctk.CTkLabel(master=title_frame, fg_color='#1A1A24', bg_color='#1A1A24', text='Shopping List',
+                                 font=('Times', 20, 'bold'))
+            title.pack(fill='both')
+            list_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+            list_frame.pack(side='top', fill='x')
+            for i in shopping_list:
+                label = ctk.CTkLabel(master=list_frame, text=f'{i}\t\t\t{shopping_list[i]}', font=('Arial', 15, 'bold')
+                                     ,fg_color='gray', anchor='w')
+                label.pack(side='top', pady=3)
+            buttons_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24')
+            buttons_frame.pack(side='bottom', fill='x', pady=10)
+            back_button = ctk.CTkButton(master=buttons_frame, text='Back', fg_color='gray', font=('Arial', 15, 'bold'),
+                                        command=lambda: self.switch_pages(self.home_page))
+            back_button.pack(side='right', padx=2)
+        else:
+            messagebox.showinfo('Empty Shopping List', 'The shopping list is empty')
+            self.switch_pages(self.home_page)
+
 
     def show_quickmeal(self):
 
@@ -219,7 +247,7 @@ class FirstWindow:
         next_day_btn = ctk.CTkButton(master=buttons_frame, text='Next >', command=nxt)
         next_day_btn.pack(side='right', padx=2)
         back_day_btn = ctk.CTkButton(master=buttons_frame, text='< Back', state='disabled', command=back_func)
-        if self.date > (dt.datetime.now()+dt.timedelta(days=1)):
+        if self.date > (dt.datetime.now() + dt.timedelta(days=1)):
             back_day_btn.configure(state='normal')
 
         back_day_btn.pack(side='right', padx=2)
@@ -407,7 +435,7 @@ class FirstWindow:
         def add_food_to_database(food_name: ctk.CTkEntry, ingredients: list, recipie: ctk.CTkTextbox,
                                  is_breakfast: ctk.CTkCheckBox):
             recipie = recipie.get(index1='1.0', index2='end')
-            is_breakfast = bool(is_breakfast)
+            is_breakfast = bool(is_breakfast.get())
             food_name = food_name.get()
             if not food_name:
                 try:
