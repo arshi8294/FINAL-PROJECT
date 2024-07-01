@@ -527,7 +527,11 @@ class FirstWindow:
     def add_update_nutrients(self):
         def add_nutrient_to_database(entries: list):
             nutrient_regex = re.compile(r'^\w+,-?\d+(\.\d+)*$')
-            existing_nutrient = [i[0] for i in self.Mp1.show_all_nutrients() if self.Mp1.show_all_nutrients()]
+
+            if self.Mp1.show_all_nutrients():
+                existing_nutrient = [i[0] for i in self.Mp1.show_all_nutrients()]
+            else:
+                existing_nutrient = None
             adding_nutrients = {}
             updating_nutrients = {}
             for i in entries:
@@ -547,7 +551,7 @@ class FirstWindow:
                     else:
                         new_nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
                         adding_nutrients.update(new_nutrient_dict)
-
+            print(adding_nutrients, updating_nutrients)
             if adding_nutrients:
                 self.Mp1.add_nutrients(adding_nutrients)
                 messagebox.showinfo('Successful insert', 'Nutrients added to database successfully')
