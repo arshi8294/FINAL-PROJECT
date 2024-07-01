@@ -466,7 +466,7 @@ class MealPlanner:
         sql = """SELECT name, quantity FROM nutrients ORDER BY quantity DESC, Name """
         self.cursor.execute(sql)
         all_nutrients = self.cursor.fetchall()
-        return all_nutrients if all_nutrients else False
+        return all_nutrients if all_nutrients else []
 
 
 

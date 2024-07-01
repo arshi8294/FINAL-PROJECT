@@ -544,9 +544,10 @@ class FirstWindow:
                             messagebox.showerror('Error', f"{e}")
                             return 0
 
-                    if temp.split(',')[0] in existing_nutrient:
-                        nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
-                        updating_nutrients.update(nutrient_dict)
+                    if existing_nutrient:
+                        if temp.split(',')[0] in existing_nutrient:
+                            nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                            updating_nutrients.update(nutrient_dict)
 
                     else:
                         new_nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
