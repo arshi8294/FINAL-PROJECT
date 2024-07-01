@@ -360,7 +360,7 @@ class MealPlanner:
         return shopping_cart
 
     def update_nutrients_inventory(self, items: dict):
-        sql = """UPDATE nutrients SET Quantity = %s WHERE Name = %s"""
+        sql = """UPDATE nutrients SET Quantity = nutrients.Quantity + %s WHERE Name = %s"""
         try:
             for i in items:
                 self.cursor.execute(sql, (items[i], i))
