@@ -72,7 +72,7 @@ class FirstWindow:
                                        font=('Arial', 15, 'bold'), fg_color='orange', width=5)
         quick_food_btn.pack(side='right', padx=3)
         shopping_cart_btn = ctk.CTkButton(master=menu_buttons_frame, text="Shopping List",
-                                          command=lambda :self.switch_pages(self.show_shopping_list),
+                                          command=lambda: self.switch_pages(self.show_shopping_list),
                                           font=('Arial', 15, 'bold'), fg_color='green', width=5)
         shopping_cart_btn.pack(side='right', padx=3)
 
@@ -122,7 +122,7 @@ class FirstWindow:
             list_frame.pack(side='top', fill='x')
             for i in shopping_list:
                 label = ctk.CTkLabel(master=list_frame, text=f'{i}\t\t\t{shopping_list[i]}', font=('Arial', 15, 'bold')
-                                     ,fg_color='gray', anchor='w')
+                                     , fg_color='gray', anchor='w')
                 label.pack(side='top', pady=3)
             buttons_frame = ctk.CTkFrame(master=page_frame, fg_color='#1A1A24', bg_color='#1A1A24')
             buttons_frame.pack(side='bottom', fill='x', pady=10)
@@ -132,7 +132,6 @@ class FirstWindow:
         else:
             messagebox.showinfo('Empty Shopping List', 'The shopping list is empty')
             self.switch_pages(self.home_page)
-
 
     def show_quickmeal(self):
 
@@ -359,7 +358,7 @@ class FirstWindow:
     def update_food_details(self):
         def update_food(food_name: str, ingredients: list, recipie: ctk.CTkTextbox):
             recipie = recipie.get(index1='1.0', index2='end')
-            regex_ingredients = re.compile(r'^\w+,\d+(\.\d+)*$')
+            regex_ingredients = re.compile(r'^[\w ]+,\d+(\.\d+)*$')
             all_ingredients = {}
             for i in ingredients:
                 temp = i.get()
@@ -444,7 +443,7 @@ class FirstWindow:
                     messagebox.showerror('Empty field', f"{e}")
                     return 0
 
-            regex_food = re.compile(r'^\w+,\d+(\.\d+)*$')
+            regex_food = re.compile(r'^[\w ]+,\d+(\.\d+)*$')
             all_ingredients = {}
             for i in ingredients:
                 temp = i.get()
@@ -526,7 +525,7 @@ class FirstWindow:
 
     def add_update_nutrients(self):
         def add_nutrient_to_database(entries: list):
-            nutrient_regex = re.compile(r'^\w+,-?\d+(\.\d+)*$')
+            nutrient_regex = re.compile(r'^[\w ]+,-?\d+(\.\d+)*$')
 
             if self.Mp1.show_all_nutrients():
                 existing_nutrient = [i[0] for i in self.Mp1.show_all_nutrients()]
@@ -544,10 +543,9 @@ class FirstWindow:
                             messagebox.showerror('Error', f"{e}")
                             return 0
 
-                    if existing_nutrient:
-                        if temp.split(',')[0] in existing_nutrient:
-                            nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
-                            updating_nutrients.update(nutrient_dict)
+                    if existing_nutrient and temp.split(',')[0] in existing_nutrient:
+                        nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
+                        updating_nutrients.update(nutrient_dict)
 
                     else:
                         new_nutrient_dict = {k: float(v) for k, v in [temp.split(',')]}
